@@ -9,7 +9,6 @@ pandas = "*"
 sklearn = "*"
 sortedcontainers = "*"
 seaborn = "*"
-tensorflow-data-validation = "*"
 
 [dev-packages]
 
