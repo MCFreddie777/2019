@@ -1,0 +1,17 @@
+version: "3.4"
+
+services:
+  runner:
+    image: nvcr.io/nvidia/merlin/merlin-pytorch-training:0.6 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]    
+    ipc: host
+    ports:
+      - 8888:8888
+      - 8797:8787
+      - 8796:8786
+    stdin_open: true
+    tty: true
