@@ -9,6 +9,8 @@ pandas = "*"
 sklearn = "*"
 sortedcontainers = "*"
 seaborn = "*"
+xgboost = "*"
+wandb = "*"
 
 [dev-packages]
 
