@@ -2,16 +2,6 @@ import numpy as np
 import pandas as pd
 
 
-def read_into_df(file):
-    """Read csv file into data frame."""
-    df = (
-        pd.read_csv(file)
-          .set_index(['user_id', 'session_id', 'timestamp', 'step'])
-    )
-
-    return df
-
-
 def generate_rranks_range(start, end):
     """Generate reciprocal ranks for a given list length."""
 
@@ -48,14 +38,12 @@ def get_average_precision_at3(ps):
     return ap3
 
 
-def score_submissions(subm_csv, gt_csv):
+def score_submissions(df_subm, df_gt):
     """Score submissions with given objective function."""
 
-    print(f"Reading ground truth data {gt_csv} ...")
-    df_gt = read_into_df(gt_csv)
-
-    print(f"Reading submission data {subm_csv} ...")
-    df_subm = read_into_df(subm_csv)
+    idx_cols = ['user_id', 'session_id', 'timestamp', 'step']
+    df_subm = df_subm.set_index(idx_cols)
+    df_gt = df_gt.set_index(idx_cols)
 
     # create dataframe containing the ground truth to target rows
     cols = ['reference', 'impressions', 'prices']
