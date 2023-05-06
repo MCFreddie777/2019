@@ -147,7 +147,6 @@ def preprocess(path,backup_path,meta_path):
     
     return df
 
-
 def get_target_rows(df):
     """
     Target rows which need to be predicted
@@ -156,3 +155,14 @@ def get_target_rows(df):
     df_target = df[mask]
 
     return df_target
+
+def explode(df, col_expl):
+    """Separate string in column col_expl and explode elements into multiple rows."""
+    
+    s = df[col_expl].str.split('|', expand=True).stack()
+    i = s.index.get_level_values(0)
+    df2 = df.loc[i].copy()
+    df2[col_expl] = s.values
+    
+    return df2
+
