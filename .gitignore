@@ -142,3 +142,7 @@ src/wandb
 
 # Data
 data
+
+# Dotenv
+.env
+!.env.example
