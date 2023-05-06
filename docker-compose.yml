@@ -13,4 +13,4 @@ services:
           devices:
             - driver: nvidia
               capabilities: [ gpu ]
-    entrypoint: pipenv run jupyter lab --ip 0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+    command: conda run jupyter lab --ip 0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''

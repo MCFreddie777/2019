@@ -27,16 +27,21 @@ RUN set -xe && \
 # Upgrade pip
 RUN pip3 install --upgrade pip
 
-# Install pipenv
-RUN pip3 install pipenv
+# Install conda
+ENV PATH="/root/miniconda3/bin:${PATH}"
 
-# Install python dependencies in /.venv
-COPY Pipfile .
-COPY Pipfile.lock .
+RUN wget \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash Miniconda3-latest-Linux-x86_64.sh -b \
+    && rm -f Miniconda3-latest-Linux-x86_64.sh
 
-RUN PIPENV_VENV_IN_PROJECT=1 pipenv install
+# Create the environment
+COPY environment.yml .
+RUN conda env update -f environment.yml --prune
 
-ENV PIPENV_CUSTOM_VENV_NAME="/.venv/"
+# Override default shell and use bash
+SHELL ["conda", "run", "/bin/bash", "-c"]
 
 WORKDIR /home
 

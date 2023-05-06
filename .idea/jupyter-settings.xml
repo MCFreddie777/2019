@@ -5,7 +5,7 @@
       <list>
         <JupyterConnectionParameters>
           <option name="authType" value="notebook" />
-          <option name="urlString" value="http://localhost:8888" />
+          <option name="urlString" value="http://127.0.0.1:8888" />
           <authParams2>
             <map />
           </authParams2>
@@ -14,11 +14,22 @@
     </option>
     <option name="moduleParameters">
       <map>
+        <entry key="$PROJECT_DIR$/.idea/2019.iml">
+          <value>
+            <JupyterConnectionParameters>
+              <option name="authType" value="notebook" />
+              <option name="urlString" value="http://127.0.0.1:8888" />
+              <authParams2>
+                <map />
+              </authParams2>
+            </JupyterConnectionParameters>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/.idea/dp-recsys.iml">
           <value>
             <JupyterConnectionParameters>
               <option name="authType" value="notebook" />
-              <option name="urlString" value="http://localhost:8888" />
+              <option name="urlString" value="http://127.0.0.1:8888" />
               <authParams2>
                 <map />
               </authParams2>
