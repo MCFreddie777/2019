@@ -146,3 +146,13 @@ def preprocess(path,backup_path,meta_path):
         df = fun(df);
     
     return df
+
+
+def get_target_rows(df):
+    """
+    Target rows which need to be predicted
+    """
+    mask = (df["action_type"] == "clickout item") & df["reference"].isnull()
+    df_target = df[mask]
+
+    return df_target
