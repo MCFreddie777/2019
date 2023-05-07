@@ -1,8 +1,32 @@
 import re
+import os
 import pandas as pd
 import numpy as np
 from functools import partial
 from tqdm import tqdm
+
+def get_env(name, default_value):
+    
+    value = os.getenv(name, default_value)
+    
+    # Sanitize the input (remove leading/trailing whitespaces)
+    value = value.strip() if value else None
+    
+    if (value is None):
+        if (default_value is None):
+            raise EnvironmentError(
+                f'Required environment variable "{name}" is not set.'
+            )
+        else:
+            value = default_value
+            
+    # Convert string input to integer if possible
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        pass
+    
+    return value
 
 def drop_single_action_users(df):
     user_id_count = df.user_id.value_counts().reset_index(name="count").rename(columns={'index': 'user_id'})
