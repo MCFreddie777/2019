@@ -17,3 +17,20 @@ docker compose up
 ## Usage
 
 Go to [http://127.0.0.1:8888](http://127.0.0.1:8888) in your browser or click the link in the console.
+
+## Scripts
+
+Projectr also contains helper scripts to generate or process data directly from console.
+No need to run jupyter notebooks.
+
+### Usage
+
+From root directory of project run
+```shell
+docker compose exec jupyterlab python src/<script_name>.py
+```
+
+e.g.
+```shell
+docker compose exec jupyterlab python src/preprocess.py
+```

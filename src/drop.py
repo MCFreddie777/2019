@@ -1,7 +1,8 @@
 import pandas as pd
 
-from .._helpers import constants
-from .._helpers.drop import drop, __exclude_user_session_pairs
+from _helpers import constants
+from _helpers.drop import drop, __exclude_user_session_pairs
+
 
 def main():
     """
