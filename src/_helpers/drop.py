@@ -1,4 +1,5 @@
 import pandas as pd
+from functools import partial
 
 def __update_user_session_pairs(user_session_pairs, pairs_to_merge):
     """
@@ -19,11 +20,7 @@ def __exclude_user_session_pairs(df, subset):
     mask = ~df.set_index(['user_id', 'session_id']).index.isin(subset.set_index(['user_id', 'session_id']).index)
     return df[mask]
 
-
-def drop(df):
-    # Create empty DF for storing user-session pairs to be deleted
-    deleted_user_session_pairs = pd.DataFrame(columns=['user_id', 'session_id'])
-    
+def __remove_single_action_users(df):
     """
     Remove those users-sessions pairs where user has only one row (therefore single session and single action)
     """
@@ -36,13 +33,13 @@ def drop(df):
     
     users_with_one_action = user_id_count[(user_id_count['count'] == 1)]
     
-    # Drop
-    deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, users_with_one_action)
-    df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
-    
+    return users_with_one_action
+
+def __remove_single_action_sessions(df):
     """
     Remove those user-session pairs where session has only one row (therefore single action)
     """
+    
     # Count number of actions (rows in df) of specific session
     session_action_count = df.groupby('session_id') \
         .agg({'user_id': 'first', 'session_id': 'count'}) \
@@ -51,35 +48,41 @@ def drop(df):
     
     sessions_with_one_action = session_action_count[(session_action_count['count'] == 1)]
     
-    # Drop
-    deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, sessions_with_one_action)
-    df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
+    return sessions_with_one_action
+
+
+
+def __remove_excessive_action_sessions(df,excessive_threshold):
+    """
+    Remove those user-session pairs where session has more than excessive_threshold rows
+    """
     
-    """
-    Remove those user-session pairs where session has more than TRESHOLD rows
-    """
-    excessive_threshold = 500
+    # Count number of actions (rows in df) of specific session
+    session_action_count = df.groupby('session_id') \
+        .agg({'user_id': 'first', 'session_id': 'count'}) \
+        .rename(columns={'session_id': 'count'}) \
+        .reset_index()[['user_id', 'session_id', 'count']]
+    
     sessions_with_excessive_actions = session_action_count[(session_action_count['count'] > excessive_threshold)]
     
-    # Drop
-    deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, sessions_with_excessive_actions)
-    df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
-
+    return sessions_with_excessive_actions
+  
+  
+def __remove_sessions_with_dup_steps(df):
     """
-    Remove those user-session pairs where session has duplicated steps )e.g. one session has multiple rows with same index)
+    Remove those user-session pairs where session has duplicated steps (e.g. one session has multiple rows with same index)
     """
-    duped_user_sessions = df[(df.duplicated(subset=['user_id', 'session_id', 'step'], keep=False))]\
-        .groupby('session_id')\
-        .agg({'user_id': 'first', 'session_id': 'first'})\
+    duped_user_sessions = df[(df.duplicated(subset=['user_id', 'session_id', 'step'], keep=False))] \
+        .groupby('session_id') \
+        .agg({'user_id': 'first', 'session_id': 'first'}) \
         .reset_index(drop=True)[['user_id', 'session_id']]
     
-    # Drop
-    deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, duped_user_sessions)
-    df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
-    
-    
+    return duped_user_sessions
+
+
+def __remove_small_avg_step_duration_sessions(df,minimum_session_step_seconds):
     """
-    Remove those user-session pairs where session has duplicated steps )e.g. one session has multiple rows with same index)
+    Remove those user-session pairs where session average step duration is under minimum_session_step_seconds
     """
     def min_max_diff(x):
         return x.max() - x.min()
@@ -95,23 +98,49 @@ def drop(df):
     
     def avg_step_duration(row):
         return row['session_duration'] / row['steps']
-
+    
     def seconds_to_minutes(seconds):
         return round(seconds / 60, 2)
-
+    
     # Transform session length into minutes
     u_actions_per_session['session_duration_minutes'] = u_actions_per_session['session_duration'].apply(seconds_to_minutes);
-
+    
     # Calculate average duration of step
     u_actions_per_session['avg_step_duration_seconds'] = u_actions_per_session.apply(avg_step_duration, axis=1);
-
-    step_duration_minimum = 1
-    users_sessions_avg_step_under_threshold = u_actions_per_session[u_actions_per_session['avg_step_duration_seconds'] < step_duration_minimum]
     
-    # Drop
-    deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, users_sessions_avg_step_under_threshold)
-    df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
+    users_sessions_avg_step_under_threshold = u_actions_per_session[u_actions_per_session['avg_step_duration_seconds'] < minimum_session_step_seconds]
     
-    return df
+    return users_sessions_avg_step_under_threshold
+    
+def drop(df):
+    """
+    Function that cleans dataset
+    
+    :param df: Dataframe to be dropped
+    :return: Tuple, new dataframe and dataframe with user-session pairs that were dropped
+    """
+    
+    origin_len = len(df)
+    # Create empty DF for storing user-session pairs to be deleted
+    deleted_user_session_pairs = pd.DataFrame(columns=['user_id', 'session_id'])
+    
+    # Pipeline of drop functions
+    functions = [
+        partial(__remove_single_action_users),
+        partial(__remove_single_action_sessions),
+        partial(__remove_excessive_action_sessions,excessive_threshold=500),
+        partial(__remove_sessions_with_dup_steps),
+        partial(__remove_small_avg_step_duration_sessions,minimum_session_step_seconds=1),
+    ]
 
+    for fun in functions:
+        prev_len = len(df)
+        result = fun(df)
+        deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, result)
+        df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
+        cur_len = len(df)
+        print(f"{fun.__name__ if hasattr(fun,'__name__') else fun.func.__name__}: Dropped {prev_len - cur_len} records.")
 
+    print(f"Dropped {origin_len - cur_len} in total. (Previously {origin_len}, now {cur_len}).");
+    
+    return df, deleted_user_session_pairs
