@@ -5,7 +5,7 @@ import numpy as np
 from functools import partial
 from tqdm import tqdm
 
-def get_env(name, default_value):
+def get_env(name, default_value, required=False):
     
     value = os.getenv(name, default_value)
     
@@ -13,7 +13,7 @@ def get_env(name, default_value):
     value = value.strip() if value else None
     
     if (value is None):
-        if (default_value is None):
+        if (default_value is None and required is True):
             raise EnvironmentError(
                 f'Required environment variable "{name}" is not set.'
             )
