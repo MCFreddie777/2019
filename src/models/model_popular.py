@@ -43,7 +43,7 @@ class ModelPopular():
         
         # Explode the impressions into separate rows
         df_impressions = (
-            hf.explode(df_target, "impressions")
+            hf.explode(df_target, ["impressions"])
             .rename(columns={"impressions": "impressed_item"})
         )
         
