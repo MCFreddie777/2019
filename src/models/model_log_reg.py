@@ -1,6 +1,21 @@
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from _helpers.preprocess import preprocess
+from _helpers import constants
+
+
+def _get_preprocessed_from_file(type):
+    train_file = constants.PREPROCESSED_TRAIN
+    test_file = constants.PREPROCESSED_TEST
+    
+    if (constants.SUBSET is not None):
+        train_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'train')
+        test_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'test')
+    
+    target_file = train_file if type == 'train' else test_file
+    
+    return pd.read_parquet(target_file)
 
 
 class ModelLogisticRegression():
@@ -15,7 +30,10 @@ class ModelLogisticRegression():
     def fit(self, df):
         """Train the logistic regression model."""
         
-        df_impressions = preprocess(df)
+        try:
+            df_impressions = _get_preprocessed_from_file('train')
+        except FileNotFoundError:
+            df_impressions = preprocess(df)
         
         df_impressions.loc[:, "is_clicked"] = (
                 df_impressions["referenced_item"] == df_impressions["impressed_item"]
@@ -29,7 +47,10 @@ class ModelLogisticRegression():
     def predict(self, df):
         """Calculate click probability based on trained logistic regression model."""
         
-        df_impressions = preprocess(df)
+        try:
+            df_impressions = _get_preprocessed_from_file('test')
+        except FileNotFoundError:
+            df_impressions = preprocess(df)
         
         df_impressions = df_impressions[df_impressions.referenced_item.isna()]
         

@@ -2,6 +2,7 @@ import pandas as pd
 
 from _helpers import constants
 from _helpers import functions as hf
+from _helpers.preprocess import preprocess
 from drop import main as drop
 
 def __subset_users(df, subset):
@@ -11,7 +12,7 @@ def __subset_users(df, subset):
     mask = df.set_index(['user_id']).index.isin(subset.set_index(['user_id']).index)
     return df[mask]
 
-def main():
+def main(preprocess_data=False):
     """
     This function creates a subset from dataset used just for testing purposes
     We need to do it in reverse order - first subset test dataset, then train.
@@ -50,6 +51,20 @@ def main():
     subset_gt = __subset_users(df_gt, subset_user_session_pairs)
     subset_gt.to_parquet(constants.DROPPED_SUBSET(n, 'ground_truth'), index=False)
     print(f"Output saved to {constants.DROPPED_SUBSET(n, 'ground_truth')}.")
+    
+    if (preprocess_data is True):
+        # Preprocess train
+        print(f"Preprocessing train...")
+        subset_preprocessed_train = preprocess(subset_train)
+        subset_preprocessed_train.to_parquet(constants.PREPROCESSED_SUBSET(n, 'train'), index=False)
+        print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'train')}.")
+        
+        # Preprocess test
+        print(f"Preprocessing test...")
+        subset_preprocessed_test = preprocess(subset_test)
+        subset_preprocessed_test.to_parquet(constants.PREPROCESSED_SUBSET(n, 'test'), index=False)
+        print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'test')}.")
+        
 
 if __name__ == "__main__":
-    main()
+    main(preprocess_data=True)
