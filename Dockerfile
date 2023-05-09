@@ -18,27 +18,26 @@ RUN rm /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d/nvidia-ml.list
 RUN set -xe && \
     apt-get update && \
     apt-get install  --no-install-recommends --no-install-suggests -y  \
-    curl \
-    unzip \
-    gcc \
-    python3 \
-    python3-pip
+    unzip
 
-# Install conda
+# Install conda & create the environment
 ENV PATH="/root/miniconda3/bin:${PATH}"
+
+COPY environment.yml .
 
 RUN wget \
     https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && mkdir /root/.conda \
     && bash Miniconda3-latest-Linux-x86_64.sh -b \
-    && rm -f Miniconda3-latest-Linux-x86_64.sh
-
-# Create the environment
-COPY environment.yml .
-RUN conda env update -f environment.yml --prune
+    && rm -f Miniconda3-latest-Linux-x86_64.sh \
+    && echo "Running $(conda --version)" \
+    && conda env create -n trivago -f environment.yml \
+    && conda init bash \
+    && echo 'conda activate trivago' >> /root/.bashrc \
+    && . /root/.bashrc \
 
 # Override default shell and use bash
-SHELL ["conda", "run", "/bin/bash", "-c"]
+SHELL ["conda", "run","-n","trivago","/bin/bash", "-c"]
 
 WORKDIR /home
 
