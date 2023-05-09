@@ -1,5 +1,7 @@
 import pandas as pd
 from functools import partial
+from numba import jit, cuda
+
 
 def __update_user_session_pairs(user_session_pairs, pairs_to_merge):
     """
@@ -20,6 +22,7 @@ def __exclude_user_session_pairs(df, subset):
     mask = ~df.set_index(['user_id', 'session_id']).index.isin(subset.set_index(['user_id', 'session_id']).index)
     return df[mask]
 
+
 def __remove_single_action_users(df):
     """
     Remove those users-sessions pairs where user has only one row (therefore single session and single action)
@@ -34,6 +37,7 @@ def __remove_single_action_users(df):
     users_with_one_action = user_id_count[(user_id_count['count'] == 1)]
     
     return users_with_one_action
+
 
 def __remove_single_action_sessions(df):
     """
@@ -51,8 +55,7 @@ def __remove_single_action_sessions(df):
     return sessions_with_one_action
 
 
-
-def __remove_excessive_action_sessions(df,excessive_threshold):
+def __remove_excessive_action_sessions(df, excessive_threshold):
     """
     Remove those user-session pairs where session has more than excessive_threshold rows
     """
@@ -66,8 +69,8 @@ def __remove_excessive_action_sessions(df,excessive_threshold):
     sessions_with_excessive_actions = session_action_count[(session_action_count['count'] > excessive_threshold)]
     
     return sessions_with_excessive_actions
-  
-  
+
+
 def __remove_sessions_with_dup_steps(df):
     """
     Remove those user-session pairs where session has duplicated steps (e.g. one session has multiple rows with same index)
@@ -80,10 +83,11 @@ def __remove_sessions_with_dup_steps(df):
     return duped_user_sessions
 
 
-def __remove_small_avg_step_duration_sessions(df,minimum_session_step_seconds):
+def __remove_small_avg_step_duration_sessions(df, minimum_session_step_seconds):
     """
     Remove those user-session pairs where session average step duration is under minimum_session_step_seconds
     """
+    
     def min_max_diff(x):
         return x.max() - x.min()
     
@@ -103,15 +107,19 @@ def __remove_small_avg_step_duration_sessions(df,minimum_session_step_seconds):
         return round(seconds / 60, 2)
     
     # Transform session length into minutes
-    u_actions_per_session['session_duration_minutes'] = u_actions_per_session['session_duration'].apply(seconds_to_minutes);
+    u_actions_per_session['session_duration_minutes'] = u_actions_per_session['session_duration'].apply(
+        seconds_to_minutes);
     
     # Calculate average duration of step
     u_actions_per_session['avg_step_duration_seconds'] = u_actions_per_session.apply(avg_step_duration, axis=1);
     
-    users_sessions_avg_step_under_threshold = u_actions_per_session[u_actions_per_session['avg_step_duration_seconds'] < minimum_session_step_seconds]
+    users_sessions_avg_step_under_threshold = u_actions_per_session[
+        u_actions_per_session['avg_step_duration_seconds'] < minimum_session_step_seconds]
     
     return users_sessions_avg_step_under_threshold
-    
+
+
+@jit(target_backend='cuda')
 def drop(df):
     """
     Function that cleans dataset
@@ -128,19 +136,20 @@ def drop(df):
     functions = [
         partial(__remove_single_action_users),
         partial(__remove_single_action_sessions),
-        partial(__remove_excessive_action_sessions,excessive_threshold=500),
+        partial(__remove_excessive_action_sessions, excessive_threshold=500),
         partial(__remove_sessions_with_dup_steps),
-        partial(__remove_small_avg_step_duration_sessions,minimum_session_step_seconds=1),
+        partial(__remove_small_avg_step_duration_sessions, minimum_session_step_seconds=1),
     ]
-
+    
     for fun in functions:
         prev_len = len(df)
         result = fun(df)
         deleted_user_session_pairs = __update_user_session_pairs(deleted_user_session_pairs, result)
         df = __exclude_user_session_pairs(df, deleted_user_session_pairs)
         cur_len = len(df)
-        print(f"{fun.__name__ if hasattr(fun,'__name__') else fun.func.__name__}: Dropped {prev_len - cur_len} records.")
-
+        print(
+            f"{fun.__name__ if hasattr(fun, '__name__') else fun.func.__name__}: Dropped {prev_len - cur_len} records.")
+    
     print(f"Dropped {origin_len - cur_len} in total. (Previously {origin_len}, now {cur_len}).");
     
     return df, deleted_user_session_pairs
