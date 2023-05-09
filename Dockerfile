@@ -24,9 +24,6 @@ RUN set -xe && \
     python3 \
     python3-pip
 
-# Upgrade pip
-RUN pip3 install --upgrade pip
-
 # Install conda
 ENV PATH="/root/miniconda3/bin:${PATH}"
 
