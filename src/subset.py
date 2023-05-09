@@ -44,14 +44,6 @@ def main(preprocess_data=False):
     subset_train.to_parquet(constants.DROPPED_SUBSET(n, 'train'), index=False)
     print(f"Output saved to {constants.DROPPED_SUBSET(n, 'train')}.")
     
-    # Subset ground_truth
-    print(f"Reading {constants.DROPPED_GROUND_TRUTH}...")
-    df_gt = pd.read_parquet(constants.DROPPED_GROUND_TRUTH)
-    
-    subset_gt = __subset_users(df_gt, subset_user_session_pairs)
-    subset_gt.to_parquet(constants.DROPPED_SUBSET(n, 'ground_truth'), index=False)
-    print(f"Output saved to {constants.DROPPED_SUBSET(n, 'ground_truth')}.")
-    
     if (preprocess_data is True):
         # Preprocess train
         print(f"Preprocessing train...")

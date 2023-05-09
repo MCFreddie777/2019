@@ -23,7 +23,6 @@ GROUND_TRUTH = INPUT_DIR / get_env('GROUND_TRUTH', 'ground_truth.csv')
 
 DROPPED_TRAIN = DROPPED_DIR / 'train.parquet'
 DROPPED_TEST = DROPPED_DIR / 'test.parquet'
-DROPPED_GROUND_TRUTH = DROPPED_DIR / 'ground_truth.parquet'
 
 PREPROCESSED_TRAIN = PREPROCESSED_DIR / 'train.parquet'
 PREPROCESSED_TEST = PREPROCESSED_DIR / 'test.parquet'
