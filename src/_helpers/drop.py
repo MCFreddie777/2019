@@ -1,6 +1,5 @@
 import pandas as pd
 from functools import partial
-from numba import jit, cuda
 
 
 def __update_user_session_pairs(user_session_pairs, pairs_to_merge):
@@ -119,7 +118,6 @@ def __remove_small_avg_step_duration_sessions(df, minimum_session_step_seconds):
     return users_sessions_avg_step_under_threshold
 
 
-@jit(target_backend='cuda')
 def drop(df):
     """
     Function that cleans dataset

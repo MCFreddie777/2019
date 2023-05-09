@@ -1,7 +1,6 @@
 from functools import partial
 import numpy as np
 import pandas as pd
-from numba import jit, cuda
 
 from . import constants
 from . import functions as hf
@@ -222,7 +221,6 @@ def __collect_features(df):
     return df[features]
 
 
-@jit(target_backend='cuda')
 def preprocess(df):
     """
     Function that preprocesses the dataset
