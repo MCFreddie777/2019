@@ -23,19 +23,19 @@ Go to [http://127.0.0.1:8888](http://127.0.0.1:8888) in your browser or click th
 
 This image contains `conda` + `pip`, therefore install the packages as followed:
 ```
-docker compose exec jupyterlab conda install <package>
+docker compose exec jupyterlab bash -ic "conda install <package>"
 ```
 
 or
 
 ```
-docker compose exec jupyterlab pip install <package>
+docker compose exec jupyterlab bash -ic "pip install <package>"
 ```
 
 To persist the packages when rebuilding the image, packages need to be freezed into environment file.
 
 ```
-docker compose exec jupyterlab conda env export --no-build > environment.yml
+docker compose exec jupyterlab bash -ic "conda env export --no-build > environment.yml"
 ```
 
 ## Scripts
@@ -46,11 +46,11 @@ No need to run jupyter notebooks.
 ### Usage
 
 From root directory of project run
-```shell
-docker compose exec jupyterlab python src/<script_name>.py
+```
+docker compose exec jupyterlab bash -ic "python src/<script_name>.py"
 ```
 
 e.g.
 ```shell
-docker compose exec jupyterlab python src/preprocess.py
+docker compose exec jupyterlab bash -ic "python src/preprocess.py"
 ```

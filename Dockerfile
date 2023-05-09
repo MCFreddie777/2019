@@ -37,7 +37,7 @@ RUN wget \
     && . /root/.bashrc \
 
 # Override default shell and use bash
-SHELL ["conda", "run","-n","trivago","/bin/bash", "-c"]
+SHELL ["conda", "run", "--no-capture-output", "-n", "trivago", "/bin/bash", "-c"]
 
 WORKDIR /home
 
