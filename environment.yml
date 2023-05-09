@@ -133,6 +133,7 @@ dependencies:
       - rfc3339-validator==0.1.4
       - rfc3986-validator==0.1.1
       - rsa==4.9
+      - scikeras==0.10.0
       - scikit-learn==1.0.2
       - scipy==1.7.3
       - seaborn==0.12.2

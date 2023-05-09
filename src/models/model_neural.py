@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from keras.models import Sequential
 from keras.layers import Dense
+from scikeras.wrappers import KerasClassifier
 
 from _helpers.preprocess import preprocess
 from _helpers import constants
@@ -27,6 +28,17 @@ class ModelNeural():
     Model class using neural network
     """
     params = {}
+    
+    def __create_model(input_shape, activation='relu', optimizer='adam', neurons=(64, 32)):
+        model = Sequential()
+        
+        model.add(Dense(neurons[0], input_shape, activation=activation))
+        model.add(Dense(neurons[1], activation=activation))
+        model.add(Dense(1, activation='sigmoid'))
+        
+        model.compile(loss='binary_crossentropy', optimizer=optimizer)
+        
+        return model
     
     def update(self, params):
         self.params = params
@@ -54,15 +66,17 @@ class ModelNeural():
         
         # Define the parameter grid
         param_grid = {
-            'epochs': [10, 20],  # Number of epochs to train the model
-            'batch_size': [32, 64]  # Batch size for training
+            'epochs': [10, 20],
+            'batch_size': [32, 64],
+            'neurons': [(128, 64), (64, 32), (32, 16)],
+            'activation': ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear'],
+            'optimizer': ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam'],
+            'learn_rate': [.001, 0.01, 0.1, 0.2, 0.3],
+            'momentum': [0.0, 0.2, 0.4, 0.6, 0.8, 0.9]
         }
         
         # Create the neural network model
-        model = Sequential()
-        model.add(Dense(64, input_shape=(X.shape[1],), activation='relu'))
-        model.add(Dense(32, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
+        model = KerasClassifier(model=self.__create_model, input_shape=(X.shape[1],), verbose=True)
         
         # Perform grid search using cross-validation
         grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3)
@@ -79,7 +93,6 @@ class ModelNeural():
             epochs=self.model.get_params()['epochs'],
             batch_size=self.model.get_params()['batch_size']
         )
-        
     
     def predict(self, df):
         
