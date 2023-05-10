@@ -6,12 +6,14 @@ from _helpers.functions import verbose_print
 from _helpers.preprocess import preprocess
 from drop import main as drop
 
+
 def __subset_users(df, subset):
     """
     Return a new df window, which excludes the overlap of subset users pairs
     """
     mask = df.set_index(['user_id']).index.isin(subset.set_index(['user_id']).index)
     return df[mask]
+
 
 def main(preprocess_data=False):
     """
@@ -23,7 +25,9 @@ def main(preprocess_data=False):
     # Number of unique user-session pairs (resulting dataframe may contain larger number of rows)
     n = hf.get_env('SUBSET', 200, required=True)
     
-    if not (constants.DROPPED_TRAIN.exists() or constants.DROPPED_TEST.exists()):
+    try:
+        hf.require_files([constants.DROPPED_TRAIN, constants.DROPPED_TRAIN])
+    except FileNotFoundError:
         drop()
     
     # Subset test dataset
@@ -57,7 +61,7 @@ def main(preprocess_data=False):
         subset_preprocessed_test = preprocess(subset_test)
         subset_preprocessed_test.to_parquet(constants.PREPROCESSED_SUBSET(n, 'test'), index=False)
         verbose_print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'test')}.")
-        
+
 
 if __name__ == "__main__":
     main(preprocess_data=True)

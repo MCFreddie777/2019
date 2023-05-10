@@ -1,6 +1,7 @@
 import pandas as pd
 
 from _helpers import constants
+from _helpers import functions as hf
 from _helpers.functions import verbose_print
 from _helpers.preprocess import preprocess
 from drop import main as drop
@@ -10,7 +11,9 @@ def main():
     """
     This function creates a parquet file which cleans up data
     """
-    if not (constants.DROPPED_TRAIN.exists() or constants.DROPPED_TEST.exists()):
+    try:
+        hf.require_files([constants.DROPPED_TRAIN, constants.DROPPED_TEST])
+    except FileNotFoundError:
         drop()
     
     # Preprocess train

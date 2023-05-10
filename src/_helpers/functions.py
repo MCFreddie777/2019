@@ -111,6 +111,16 @@ def reduce_mem_usage(df):
     
     return df
 
+
 def verbose_print(str, verbose=get_env('VERBOSE', True)):
     if verbose:
         print(str)
+
+
+def require_files(files):
+    """
+    Checks whether the given file exists
+    """
+    for f in files:
+        if not f.exists():
+            raise FileNotFoundError(f)

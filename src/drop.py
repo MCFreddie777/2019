@@ -10,6 +10,7 @@ def main():
     """
     This function creates a parquet file which cleans up data
     """
+    hf.require_files([constants.TRAIN, constants.TEST])
     
     # Drop train dataset
     verbose_print(f"Reading {constants.TRAIN}...")
@@ -27,6 +28,7 @@ def main():
     df_test = hf.reduce_mem_usage(df_test)
     df_test.to_parquet(constants.DROPPED_TEST, index=False)
     verbose_print(f"Output saved to {constants.DROPPED_TEST}.")
-    
+
+
 if __name__ == "__main__":
     main()
