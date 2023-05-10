@@ -15,11 +15,11 @@ class ModelPopular():
         """Get number of clicks that each item received in the df."""
         
         df_cols = df.copy().loc[df["action_type"].isin(constants.ITEM_REFERENCE_ACTION_TYPE_COLS), :]
-
+        
         # Get number of user interactions with specific item
         df_user_item_interactions = (
             df_cols
-            .groupby(['user_id', 'reference'])
+            .groupby(['user_id', 'reference'], observed=True)
             .size()
             .reset_index(name='user_item_interactions')
         )
@@ -27,13 +27,14 @@ class ModelPopular():
         # Get global number of interactions with the specific item
         df_item_interactions = (
             df_cols
-            .groupby('reference')
+            .groupby('reference', observed=True)
             ['user_id']
             .nunique()
             .reset_index(name="item_interactions")
         )
         
-        self.df_user_item_pop = df_user_item_interactions.merge(df_item_interactions,on="reference").rename(columns={'reference':'item'})
+        self.df_user_item_pop = df_user_item_interactions.merge(df_item_interactions, on="reference").rename(
+            columns={'reference': 'item'})
     
     def predict(self, df):
         features = ['user_id', 'session_id', 'timestamp', 'step', 'action_type', 'reference', 'impressions']
@@ -52,8 +53,8 @@ class ModelPopular():
             df_impressions
             .merge(
                 self.df_user_item_pop,
-                left_on=['user_id',"impressed_item"],
-                right_on=['user_id',"item"],
+                left_on=['user_id', "impressed_item"],
+                right_on=['user_id', "item"],
                 how="left"
             )
         )
@@ -62,8 +63,8 @@ class ModelPopular():
         df_rec = (
             df_impressions
             .sort_values(
-                by=["user_id", "session_id", "timestamp", "step",'user_item_interactions','item_interactions'],
-                ascending=[True, True, True, True, False,False],
+                by=["user_id", "session_id", "timestamp", "step", 'user_item_interactions', 'item_interactions'],
+                ascending=[True, True, True, True, False, False],
                 na_position='last'
             )
             .groupby(["user_id", "session_id", "timestamp", "step"])["impressed_item"]
