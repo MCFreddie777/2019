@@ -1,6 +1,9 @@
 import os
+import glob
 import pandas as pd
 import numpy as np
+
+from . import constants
 
 
 def get_env(name, default_value, required=False):
@@ -125,3 +128,19 @@ def require_files(files):
     for f in files:
         if not f.exists():
             raise FileNotFoundError(f)
+
+
+def load_preprocessed_dataset(type):
+    pattern = str(constants.PREPROCESSED_DIR) + f'/{type}_*.parquet'
+    files = glob.glob(pattern)
+    
+    if not (len(files)):
+        raise FileNotFoundError(pattern)
+    
+    dfs = []
+    
+    for file in files:
+        df = pd.read_parquet(file)
+        dfs.append(df)
+    
+    return pd.concat(dfs)

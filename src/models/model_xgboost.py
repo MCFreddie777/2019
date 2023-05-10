@@ -1,21 +1,7 @@
-import pandas as pd
 import xgboost as xgb
 
 from _helpers.preprocess import preprocess
-from _helpers import constants
-
-
-def _get_preprocessed_from_file(type):
-    train_file = constants.PREPROCESSED_TRAIN
-    test_file = constants.PREPROCESSED_TEST
-    
-    if (constants.SUBSET is not None):
-        train_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'train')
-        test_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'test')
-    
-    target_file = train_file if type == 'train' else test_file
-    
-    return pd.read_parquet(target_file)
+from _helpers import functions as hf
 
 
 class ModelXGBoost():
@@ -31,7 +17,7 @@ class ModelXGBoost():
         """Train the XGBoost model."""
         
         try:
-            df_impressions = _get_preprocessed_from_file('train')
+            df_impressions = hf.load_preprocessed_dataset('train')
         except FileNotFoundError:
             df_impressions = preprocess(df)
         
@@ -48,7 +34,7 @@ class ModelXGBoost():
         """Calculate click probability based on XGBoost prediction probability."""
         
         try:
-            df_impressions = _get_preprocessed_from_file('test')
+            df_impressions = hf.load_preprocessed_dataset('test')
         except FileNotFoundError:
             df_impressions = preprocess(df)
         

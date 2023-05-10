@@ -1,24 +1,10 @@
-import pandas as pd
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split,RandomizedSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from scipy.stats import randint
 
 from _helpers.preprocess import preprocess
-from _helpers import constants
-
-
-def _get_preprocessed_from_file(type):
-    train_file = constants.PREPROCESSED_TRAIN
-    test_file = constants.PREPROCESSED_TEST
-    
-    if (constants.SUBSET is not None):
-        train_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'train')
-        test_file = constants.PREPROCESSED_SUBSET(constants.SUBSET, 'test')
-    
-    target_file = train_file if type == 'train' else test_file
-    
-    return pd.read_parquet(target_file)
+from _helpers import functions as hf
 
 
 class ModelMLP():
@@ -33,7 +19,7 @@ class ModelMLP():
     def fit(self, df):
         
         try:
-            df_impressions = _get_preprocessed_from_file('train')
+            df_impressions = hf.load_preprocessed_dataset('train')
         except FileNotFoundError:
             df_impressions = preprocess(df)
         
@@ -63,15 +49,15 @@ class ModelMLP():
         model = MLPRegressor(random_state=42)
         
         # Perform randomized search
-        randomized_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=10, cv=3,verbose=True)
+        randomized_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
         randomized_search.fit(X_train, y_train)
         
         self.model = randomized_search.best_estimator_
-        
+    
     def predict(self, df):
         
         try:
-            df_impressions = _get_preprocessed_from_file('test')
+            df_impressions = hf.load_preprocessed_dataset('test')
         except FileNotFoundError:
             df_impressions = preprocess(df)
         
