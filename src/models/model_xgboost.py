@@ -1,4 +1,5 @@
 import xgboost as xgb
+from sklearn.model_selection import RandomizedSearchCV
 
 from _helpers.preprocess import preprocess
 from _helpers import functions as hf
@@ -28,7 +29,18 @@ class ModelXGBoost():
         X = df_impressions[self.params['features']]
         y = df_impressions.is_clicked
         
-        self.xgb = xgb.XGBClassifier(max_depth=3, learning_rate=0.1, n_estimators=100, verbosity=1).fit(X, y)
+        param_grid = {
+            'max_depth': [3, 5, 7],
+            'learning_rate': [0.1, 0.01, 0.001],
+            'n_estimators': [100, 200, 300]
+        }
+        
+        xgb_clf = xgb.XGBClassifier(verbosity=1)
+        
+        # Perform randomized search
+        random_search = RandomizedSearchCV(xgb_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True).fit(X, y)
+    
+        self.xgb = random_search.best_estimator_
     
     def predict(self, df):
         """Calculate click probability based on XGBoost prediction probability."""

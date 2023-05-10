@@ -1,4 +1,5 @@
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RandomizedSearchCV
 
 from _helpers.preprocess import preprocess
 from _helpers import functions as hf
@@ -28,7 +29,17 @@ class ModelLogisticRegression():
         X = df_impressions[self.params['features']]
         y = df_impressions.is_clicked
         
-        self.logreg = LogisticRegression(solver="lbfgs", max_iter=100, tol=1e-11, C=1e10, verbose=True).fit(X, y)
+        param_grid = {
+            'solver': ['lbfgs', 'liblinear'],
+            'C': [0.1, 1.0, 10.0, 100.0]
+        }
+        
+        logreg_clf = LogisticRegression(max_iter=100, tol=1e-11, verbose=True)
+        
+        # Perform randomized search
+        random_search = RandomizedSearchCV(logreg_clf, param_distributions=param_grid, n_iter=10, cv=3).fit(X, y)
+        
+        self.logreg = random_search.best_estimator_
     
     def predict(self, df):
         """Calculate click probability based on trained logistic regression model."""
