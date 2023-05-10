@@ -173,29 +173,40 @@ def __encode_cat_columns(df, columns):
     return df2
 
 
-def __add_rating_column(df):
-    df_meta = pd.read_csv(constants.METADATA, dtype={'item_id': str})
+class MetaPreprocesser():
+    """
+    Class for processing metadata
+    Stateful, so it can be used for preprocessing multiple times
+    """
     
-    # Split into array
-    df_meta.loc[:, 'properties'] = df_meta.loc[:, 'properties'].str.split("|")
-    
-    rating_map = {
-        'Satisfactory Rating': 7.0,
-        'Good Rating': 7.5,
-        'Very Good Rating': 8.0,
-        'Excellent Rating': 8.5
-    }
-    
-    # Properties contain multiple ratings, all of those which apply, we need to find a maximum
-    df_meta['impressed_item_rating'] = df_meta['properties'].apply(
-        lambda x: max([rating_map[key] for key in x if key in rating_map], default=None)) \
-        .fillna(np.mean(list(rating_map.values()))) # Fill empty with mean
-    
+    def __init__(self, meta_file=constants.METADATA):
+        self.df_meta = pd.read_csv(meta_file, dtype={'item_id': str})
+        
+        # Split into array
+        self.df_meta.loc[:, 'properties'] = self.df_meta.loc[:, 'properties'].str.split("|")
+        
+        rating_map = {
+            'Satisfactory Rating': 7.0,
+            'Good Rating': 7.5,
+            'Very Good Rating': 8.0,
+            'Excellent Rating': 8.5
+        }
+        
+        # Properties contain multiple ratings, all of those which apply, we need to find a maximum
+        self.df_meta['impressed_item_rating'] = self.df_meta['properties'].apply(
+            lambda x: max([rating_map[key] for key in x if key in rating_map], default=None)) \
+            .fillna(np.mean(list(rating_map.values())))  # Fill empty with mean
+
+
+def __add_rating_column(df, df_meta_preprocessed=MetaPreprocesser().df_meta):
     df2 = df.merge(
-        df_meta,
+        df_meta_preprocessed[['item_id', 'impressed_item_rating']],
         left_on='impressed_item',
-        right_on='item_id'
+        right_on='item_id',
+        how='left'
     )
+    
+    df2 = df2.drop(columns='item_id')
     
     return df2
 
@@ -222,7 +233,7 @@ def __collect_features(df):
     return df[features]
 
 
-def preprocess(df):
+def preprocess(df, df_meta_preprocessed):
     """
     Function that preprocesses the dataset
     
@@ -242,7 +253,7 @@ def preprocess(df):
         partial(__add_impressed_item_position_column),
         partial(__add_last_interacted_column),
         partial(__encode_cat_columns, columns=['device', 'platform', 'city']),
-        partial(__add_rating_column),
+        partial(__add_rating_column, df_meta_preprocessed=df_meta_preprocessed),
         partial(__collect_features),
     ]
     

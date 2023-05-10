@@ -7,7 +7,8 @@ def get_env(name, default_value, required=False):
     value = os.getenv(name, default_value)
     
     # Sanitize the input (remove leading/trailing whitespaces)
-    value = value.strip() if value else None
+    if isinstance(value, str):
+        value = value.strip() if value else None
     
     if (value is None):
         if (default_value is None and required is True):
@@ -112,7 +113,7 @@ def reduce_mem_usage(df):
     return df
 
 
-def verbose_print(str, verbose=get_env('VERBOSE', True)):
+def verbose_print(str, verbose=get_env('VERBOSE', False)):
     if verbose:
         print(str)
 
