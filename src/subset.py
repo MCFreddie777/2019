@@ -2,6 +2,7 @@ import pandas as pd
 
 from _helpers import constants
 from _helpers import functions as hf
+from _helpers.functions import verbose_print
 from _helpers.preprocess import preprocess
 from drop import main as drop
 
@@ -26,36 +27,36 @@ def main(preprocess_data=False):
         drop()
     
     # Subset test dataset
-    print(f"Reading {constants.DROPPED_TEST}...")
+    verbose_print(f"Reading {constants.DROPPED_TEST}...")
     df_test = pd.read_parquet(constants.DROPPED_TEST)
     
     subset_user_session_pairs = df_test[['user_id', 'session_id']].drop_duplicates().head(n)
-    print(f"Picked {len(subset_user_session_pairs)} from test dataset.")
+    verbose_print(f"Picked {len(subset_user_session_pairs)} from test dataset.")
     
     subset_test = __subset_users(df_test, subset_user_session_pairs)
     subset_test.to_parquet(constants.DROPPED_SUBSET(n, 'test'), index=False)
-    print(f"Output saved to {constants.DROPPED_SUBSET(n, 'test')}.")
+    verbose_print(f"Output saved to {constants.DROPPED_SUBSET(n, 'test')}.")
     
     # Subset train dataset
-    print(f"Reading {constants.DROPPED_TRAIN}...")
+    verbose_print(f"Reading {constants.DROPPED_TRAIN}...")
     df_train = pd.read_parquet(constants.DROPPED_TRAIN)
     
     subset_train = __subset_users(df_train, subset_user_session_pairs)
     subset_train.to_parquet(constants.DROPPED_SUBSET(n, 'train'), index=False)
-    print(f"Output saved to {constants.DROPPED_SUBSET(n, 'train')}.")
+    verbose_print(f"Output saved to {constants.DROPPED_SUBSET(n, 'train')}.")
     
     if (preprocess_data is True):
         # Preprocess train
-        print(f"Preprocessing train...")
+        verbose_print(f"Preprocessing train...")
         subset_preprocessed_train = preprocess(subset_train)
         subset_preprocessed_train.to_parquet(constants.PREPROCESSED_SUBSET(n, 'train'), index=False)
-        print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'train')}.")
+        verbose_print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'train')}.")
         
         # Preprocess test
-        print(f"Preprocessing test...")
+        verbose_print(f"Preprocessing test...")
         subset_preprocessed_test = preprocess(subset_test)
         subset_preprocessed_test.to_parquet(constants.PREPROCESSED_SUBSET(n, 'test'), index=False)
-        print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'test')}.")
+        verbose_print(f"Preprocessed output saved to {constants.PREPROCESSED_SUBSET(n, 'test')}.")
         
 
 if __name__ == "__main__":

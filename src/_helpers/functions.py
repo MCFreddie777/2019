@@ -110,3 +110,7 @@ def reduce_mem_usage(df):
     print('Decreased by {:.1f}%'.format(100 * (start_mem - end_mem) / start_mem))
     
     return df
+
+def verbose_print(str, verbose=get_env('VERBOSE', True)):
+    if verbose:
+        print(str)

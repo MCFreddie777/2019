@@ -4,6 +4,7 @@ import pandas as pd
 
 from . import constants
 from . import functions as hf
+from .functions import verbose_print
 
 
 def __select_only_reference_action_columns(df):
@@ -246,7 +247,7 @@ def preprocess(df):
     ]
     
     for fun in functions:
-        print(f"Running {fun.__name__ if hasattr(fun, '__name__') else fun.func.__name__}...")
+        verbose_print(f"Running {fun.__name__ if hasattr(fun, '__name__') else fun.func.__name__}...")
         df = fun(df)
     
     return df
