@@ -13,10 +13,10 @@ class ModelRandom():
         if ('seed' in params):
             self.params['seed'] = params['seed']
     
-    def fit(self, _):
+    def fit(self, *args, **kwargs):
         pass
     
-    def predict(self, df):
+    def predict(self, df, *args, **kwargs):
         df_target = f.get_target_rows(df.copy())
         
         random.seed(self.params['seed'])

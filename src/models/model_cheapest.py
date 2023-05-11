@@ -8,10 +8,10 @@ class ModelCheapest():
     def update(self, params):
         self.params = params
     
-    def fit(self, _):
+    def fit(self, *args, **kwargs):
         pass
     
-    def predict(self, df):
+    def predict(self, df, *args, **kwargs):
         df_target = hf.get_target_rows(df.copy())
         
         # Explode the impression-price pairs into separate rows
@@ -24,15 +24,15 @@ class ModelCheapest():
         df_rec = (
             df_impressions
             .sort_values(
-                by=["user_id", "session_id", "timestamp", "step",'price'],
+                by=["user_id", "session_id", "timestamp", "step", 'price'],
                 ascending=True,
                 na_position='last'
             )
             .groupby(["user_id", "session_id", "timestamp", "step"])["impressed_item"]
-                .apply(lambda x: ' '.join(x))
-                .to_frame()
-                .reset_index()
-                .rename(columns={'impressed_item': 'item_recommendations'})
+            .apply(lambda x: ' '.join(x))
+            .to_frame()
+            .reset_index()
+            .rename(columns={'impressed_item': 'item_recommendations'})
         )
         
         return df_rec

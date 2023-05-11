@@ -1,7 +1,6 @@
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 
-from _helpers.preprocess import preprocess
 from _helpers import functions as hf
 
 
@@ -14,13 +13,10 @@ class ModelXGBoost():
     def update(self, params):
         self.params = params
     
-    def fit(self, df):
+    def fit(self, *args, **kwargs):
         """Train the XGBoost model."""
         
-        try:
-            df_impressions = hf.load_preprocessed_dataset('train')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+        df_impressions = hf.load_preprocessed_dataset('train')
         
         df_impressions.loc[:, "is_clicked"] = (
                 df_impressions["referenced_item"] == df_impressions["impressed_item"]
@@ -38,17 +34,15 @@ class ModelXGBoost():
         xgb_clf = xgb.XGBClassifier(verbosity=1)
         
         # Perform randomized search
-        random_search = RandomizedSearchCV(xgb_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True).fit(X, y)
-    
+        random_search = RandomizedSearchCV(xgb_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True) \
+            .fit(X, y)
+        
         self.xgb = random_search.best_estimator_
     
-    def predict(self, df):
+    def predict(self, *args, **kwargs):
         """Calculate click probability based on XGBoost prediction probability."""
         
-        try:
-            df_impressions = hf.load_preprocessed_dataset('test')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+        df_impressions = hf.load_preprocessed_dataset('test')
         
         df_impressions = df_impressions[df_impressions.referenced_item.isna()]
         

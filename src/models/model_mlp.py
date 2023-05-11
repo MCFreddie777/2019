@@ -3,7 +3,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from scipy.stats import randint
 
-from _helpers.preprocess import preprocess
 from _helpers import functions as hf
 
 
@@ -16,12 +15,8 @@ class ModelMLP():
     def update(self, params):
         self.params = params
     
-    def fit(self, df):
-        
-        try:
-            df_impressions = hf.load_preprocessed_dataset('train')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+    def fit(self, *args, **kwargs):
+        df_impressions = hf.load_preprocessed_dataset('train')
         
         df_impressions.loc[:, "is_clicked"] = (
                 df_impressions["referenced_item"] == df_impressions["impressed_item"]
@@ -54,12 +49,8 @@ class ModelMLP():
         
         self.model = randomized_search.best_estimator_
     
-    def predict(self, df):
-        
-        try:
-            df_impressions = hf.load_preprocessed_dataset('test')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+    def predict(self, *args, **kwargs):
+        df_impressions = hf.load_preprocessed_dataset('test')
         
         df_impressions = df_impressions[df_impressions.referenced_item.isna()]
         

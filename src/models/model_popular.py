@@ -11,7 +11,7 @@ class ModelPopular():
     def update(self, params):
         self.params = params
     
-    def fit(self, df):
+    def fit(self, df, *args, **kwargs):
         """Get number of clicks that each item received in the df."""
         
         df_cols = df.copy().loc[df["action_type"].isin(constants.ITEM_REFERENCE_ACTION_TYPE_COLS), :]
@@ -36,7 +36,7 @@ class ModelPopular():
         self.df_user_item_pop = df_user_item_interactions.merge(df_item_interactions, on="reference").rename(
             columns={'reference': 'item'})
     
-    def predict(self, df):
+    def predict(self, df, *args, **kwargs):
         features = ['user_id', 'session_id', 'timestamp', 'step', 'action_type', 'reference', 'impressions']
         df_cols = df.copy().loc[:, features]
         

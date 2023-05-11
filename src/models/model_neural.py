@@ -5,7 +5,6 @@ from keras.models import Sequential
 from keras.layers import Dense
 from scikeras.wrappers import KerasClassifier
 
-from _helpers.preprocess import preprocess
 from _helpers import functions as hf
 
 
@@ -29,12 +28,8 @@ class ModelNeural():
     def update(self, params):
         self.params = params
     
-    def fit(self, df):
-        
-        try:
-            df_impressions = hf.load_preprocessed_dataset('train')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+    def fit(self, *args, **kwargs):
+        df_impressions = hf.load_preprocessed_dataset('train')
         
         df_impressions.loc[:, "is_clicked"] = (
                 df_impressions["referenced_item"] == df_impressions["impressed_item"]
@@ -80,12 +75,8 @@ class ModelNeural():
             batch_size=self.model.get_params()['batch_size']
         )
     
-    def predict(self, df):
-        
-        try:
-            df_impressions = hf.load_preprocessed_dataset('test')
-        except FileNotFoundError:
-            df_impressions = preprocess(df)
+    def predict(self, *args, **kwargs):
+        df_impressions = hf.load_preprocessed_dataset('test')
         
         df_impressions = df_impressions[df_impressions.referenced_item.isna()]
         
