@@ -194,8 +194,7 @@ class MetaPreprocesser():
         
         # Properties contain multiple ratings, all of those which apply, we need to find a maximum
         self.df_meta['impressed_item_rating'] = self.df_meta['properties'].apply(
-            lambda x: max([rating_map[key] for key in x if key in rating_map], default=None)) \
-            .fillna(np.mean(list(rating_map.values())))  # Fill empty with mean
+            lambda x: max([rating_map[key] for key in x if key in rating_map], default=None))
 
 
 def __add_rating_column(df, df_meta_preprocessed=MetaPreprocesser().df_meta):
@@ -205,6 +204,9 @@ def __add_rating_column(df, df_meta_preprocessed=MetaPreprocesser().df_meta):
         right_on='item_id',
         how='left'
     )
+    
+    # Left join, fill empty ratings (impressed_item wasn't in df_meta) with mean
+    df2['impressed_item_rating'] = df2['impressed_item_rating'].fillna(df2['impressed_item_rating'].mean())
     
     df2 = df2.drop(columns='item_id')
     
