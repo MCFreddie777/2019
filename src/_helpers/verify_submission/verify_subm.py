@@ -1,10 +1,14 @@
+import pandas as pd
+
 from . import functions as f
+from _helpers import constants
 
 
-def main(df_subm, df_test):
+def main(df_subm):
     """
     Function for verifying if submitted file is in correct format ready for scoring
     """
+    df_test = pd.read_csv(constants.TEST)
     
     print('Checking for required columns in the submission file...')
     check_cols = f.check_columns(df_subm)
@@ -21,4 +25,4 @@ def main(df_subm, df_test):
     if all([check_cols, check_dupl, check_sess]):
         print('All checks passed')
     else:
-        print('One or more checks failed')
+        raise Exception('One or more checks failed')
