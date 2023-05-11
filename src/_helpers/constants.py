@@ -19,7 +19,6 @@ METADATA = INPUT_DIR / get_env('METADATA', 'item_metadata.csv')
 GROUND_TRUTH = INPUT_DIR / get_env('GROUND_TRUTH', 'test_ground_truth.csv')
 
 DROPPED_TRAIN = DROPPED_DIR / 'train.parquet'
-DROPPED_TEST = DROPPED_DIR / 'test.parquet'
 
 
 def PREPROCESSED(n, type):

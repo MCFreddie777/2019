@@ -135,7 +135,7 @@ def load_preprocessed_dataset(type):
     files = glob.glob(pattern)
     
     if not (len(files)):
-        raise FileNotFoundError(pattern)
+        raise FileNotFoundError(f'Error: No files found at {pattern}!')
     
     dfs = []
     

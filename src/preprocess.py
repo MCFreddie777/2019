@@ -6,11 +6,6 @@ from _helpers.preprocess import preprocess, MetaPreprocesser
 from drop import main as drop
 
 
-def read_data(file_path):
-    print(f"Reading {file_path}...")
-    return pd.read_parquet(file_path)
-
-
 def split_df_into_session_chunks(df, chunk_size):
     """
     Gets unique user - session pairs and splits dataframe into chunks of N user - session pairs in chunk (N == chunk_size)
@@ -39,16 +34,18 @@ def main():
     This function prepares test and train data for training
     """
     try:
-        hf.require_files([constants.DROPPED_TRAIN, constants.DROPPED_TEST])
+        hf.require_files([constants.DROPPED_TRAIN, constants.TEST])
     except FileNotFoundError:
         drop()
     
     # Preprocess train
-    df_train = read_data(constants.DROPPED_TRAIN)
+    print(f"Reading {constants.DROPPED_TRAIN}...")
+    df_train = pd.read_parquet(constants.DROPPED_TRAIN)
     preprocess_and_save_chunks(df_train, 'train')
     
-    # Preprocess train
-    df_test = read_data(constants.DROPPED_TEST)
+    # Preprocess test
+    print(f"Reading {constants.TEST}...")
+    df_test = hf.reduce_mem_usage(pd.read_csv(constants.TEST))
     preprocess_and_save_chunks(df_test, 'test')
     
     print("Preprocessing complete.")
