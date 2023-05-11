@@ -130,12 +130,18 @@ def require_files(files):
             raise FileNotFoundError(f)
 
 
-def load_preprocessed_dataset(type):
+def get_preprocessed_dataset_chunks(type):
     pattern = str(constants.PREPROCESSED_DIR) + f'/{type}_*.parquet'
     files = glob.glob(pattern)
     
     if not (len(files)):
         raise FileNotFoundError(f'Error: No files found at {pattern}!')
+    
+    return files
+
+
+def load_preprocessed_dataset(type):
+    files = get_preprocessed_dataset_chunks(type)
     
     dfs = []
     
