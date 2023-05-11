@@ -34,10 +34,10 @@ class ModelXGBoost():
         xgb_clf = xgb.XGBClassifier(verbosity=1)
         
         # Perform randomized search
-        random_search = RandomizedSearchCV(xgb_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True) \
-            .fit(X, y)
+        randomized_search = RandomizedSearchCV(xgb_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
+        randomized_search.fit(X, y)
         
-        self.xgb = random_search.best_estimator_
+        self.xgb = randomized_search.best_estimator_
     
     def predict(self, *args, **kwargs):
         """Calculate click probability based on XGBoost prediction probability."""

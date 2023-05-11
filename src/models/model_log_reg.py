@@ -30,12 +30,13 @@ class ModelLogisticRegression():
             'C': [0.1, 1.0, 10.0, 100.0]
         }
         
-        logreg_clf = LogisticRegression(max_iter=100, tol=1e-11, verbose=True)
+        logreg_clf = LogisticRegression(max_iter=100, tol=1e-11)
         
         # Perform randomized search
-        random_search = RandomizedSearchCV(logreg_clf, param_distributions=param_grid, n_iter=10, cv=3).fit(X, y)
+        randomized_search = RandomizedSearchCV(estimator=logreg_clf, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
+        randomized_search.fit(X, y)
         
-        self.logreg = random_search.best_estimator_
+        self.logreg = randomized_search.best_estimator_
     
     def predict(self, *args, **kwargs):
         """Calculate click probability based on trained logistic regression model."""

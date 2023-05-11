@@ -1,6 +1,6 @@
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint
 
 from _helpers import functions as hf
@@ -29,9 +29,6 @@ class ModelMLP():
         self.scaler = StandardScaler()
         X = self.scaler.fit_transform(X)
         
-        # Split the data into training and validation sets
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
-        
         # Define the parameter grid for randomized search
         param_grid = {
             'hidden_layer_sizes': randint(64, 256),
@@ -44,8 +41,8 @@ class ModelMLP():
         model = MLPRegressor(random_state=42)
         
         # Perform randomized search
-        randomized_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
-        randomized_search.fit(X_train, y_train)
+        randomized_search = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
+        randomized_search.fit(X, y)
         
         self.model = randomized_search.best_estimator_
     

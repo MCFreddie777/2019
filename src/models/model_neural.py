@@ -1,6 +1,6 @@
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from keras.models import Sequential
 from keras.layers import Dense
 from scikeras.wrappers import KerasClassifier
@@ -57,14 +57,14 @@ class ModelNeural():
         }
         
         # Create the neural network model
-        model = KerasClassifier(model=self.__create_model, input_shape=(X.shape[1],), verbose=True)
+        model = KerasClassifier(model=self.__create_model, input_shape=(X.shape[1],))
         
-        # Perform grid search using cross-validation
-        grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3)
-        grid_search.fit(X_train, y_train)
+        # Perform randomized search
+        randomized_search = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
+        randomized_search.fit(X_train, y_train)
         
         # Get the best model from grid search
-        self.model = grid_search.best_estimator_
+        self.model = randomized_search.best_estimator_
         
         # Train the best model on the full training data
         self.model.fit(
