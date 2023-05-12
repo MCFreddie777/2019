@@ -84,7 +84,7 @@ if ('needs_data' in models[params['model']] and models[params['model']]['needs_d
     df_train = pd.read_parquet(constants.DROPPED_TRAIN)
 
 # Fit the model
-model.fit(df_train)
+model.fit(df_train, wandb=wandb_run)
 
 # Load test data
 df_test = pd.read_csv(constants.TEST)

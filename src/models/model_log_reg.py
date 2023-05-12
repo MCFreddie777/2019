@@ -30,6 +30,7 @@ class ModelLogisticRegression():
     
     def fit(self, *args, **kwargs):
         """Train the logistic regression model."""
+        wandb = kwargs['wandb']
         
         param_grid = {
             'solver': ['lbfgs', 'liblinear'],
@@ -50,6 +51,16 @@ class ModelLogisticRegression():
             cv=3,
         )
         randomized_search.fit(X, y)
+        
+        # Save hyperparameter tuning results
+        wandb.log({
+            "hyperparameter_tuning": {
+                "type": randomized_search.__class__,
+                "best_score": randomized_search.best_score_,
+                "best_params": randomized_search.best_params_,
+                "best_estimator": str(randomized_search.best_estimator_)
+            }
+        })
         
         # Save best model
         self.logreg = randomized_search.best_estimator_
