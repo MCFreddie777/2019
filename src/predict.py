@@ -7,7 +7,7 @@ from _helpers.verify_submission.verify_subm import main as verify_subm
 from _helpers.score_submission.score_subm import main as score_subm
 
 from models.model_random import ModelRandom
-from models.model_nochange import ModelNoChange
+from models.model_baseline import ModelBaseline
 from models.model_popular import ModelPopular
 from models.model_log_reg import ModelLogisticRegression
 from models.model_cheapest import ModelCheapest
@@ -24,8 +24,8 @@ models = {
         'class': ModelRandom,
         'needs_data': True,
     },
-    'nochange': {
-        'class': ModelNoChange,
+    'baseline': {
+        'class': ModelBaseline,
         'needs_data': True,
     },
     'popular': {

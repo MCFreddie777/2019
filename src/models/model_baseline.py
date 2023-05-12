@@ -1,7 +1,7 @@
 from _helpers import functions as f
 
 
-class ModelNoChange():
+class ModelBaseline():
     """
     Model class for the model without change based on displayed items list.
     """
