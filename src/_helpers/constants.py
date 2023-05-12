@@ -11,6 +11,7 @@ INPUT_DIR = DATA_DIR / 'input'
 OUTPUT_DIR = DATA_DIR / 'output'
 DROPPED_DIR = DATA_DIR / 'dropped'
 PREPROCESSED_DIR = DATA_DIR / 'preprocessed'
+MODEL_DIR = DATA_DIR / 'models'
 
 # Files
 TRAIN = INPUT_DIR / get_env('TRAIN', 'train.csv')

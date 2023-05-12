@@ -1,7 +1,9 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
+import joblib
 
+from _helpers import constants
 from _helpers import functions as hf
 
 
@@ -56,6 +58,9 @@ class ModelLogisticRegression():
         for chunk_filename in train_chunks:
             X, y = self.__get_features_and_labels(chunk_filename)
             self.logreg.fit(X, y)
+        
+        # Persist model in file
+        joblib.dump(self.logreg, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')
     
     def predict(self, *args, **kwargs):
         """Calculate click probability based on trained logistic regression model."""

@@ -1,5 +1,6 @@
 import pandas as pd
 import wandb
+import time
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -54,6 +55,7 @@ run = 1
 notes = ''
 params = {
     'model': 'log-reg',
+    'timestamp': int(time.time()),
     'features': [
         "impressed_item_position",
         "impressed_item_rating",
