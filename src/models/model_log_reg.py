@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 import joblib
@@ -14,14 +15,14 @@ class ModelLogisticRegression():
     params = {}
     
     def __get_features_and_labels(self, filename):
-        df_impressions = pd.read_parquet(filename)
+        df = pd.read_parquet(filename)
         
-        df_impressions.loc[:, "is_clicked"] = (
-                df_impressions["referenced_item"] == df_impressions["impressed_item"]
+        df.loc[:, "is_clicked"] = (
+                df["referenced_item"] == df["impressed_item"]
         ).astype(int)
         
-        X = df_impressions[self.params['features']]
-        y = df_impressions.is_clicked
+        X = df[self.params['features']]
+        y = df.is_clicked
         
         return X, y
     
@@ -33,11 +34,13 @@ class ModelLogisticRegression():
         wandb = kwargs['wandb']
         
         param_grid = {
-            'solver': ['lbfgs', 'liblinear'],
-            'C': [0.1, 1.0, 10.0, 100.0]
+            'penalty': ['l1', 'l2', 'elasticnet', 'none'],
+            'C': np.logspace(-4, 4, 20),
+            'solver': ['lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'],
+            'max_iter': [100, 1000, 2500, 5000]
         }
         
-        logreg_clf = LogisticRegression(max_iter=100, tol=1e-11, warm_start=True, verbose=True)
+        logreg_clf = LogisticRegression(tol=1e-11, warm_start=True)
         
         train_chunks = hf.get_preprocessed_dataset_chunks('train')
         
@@ -49,6 +52,7 @@ class ModelLogisticRegression():
             param_distributions=param_grid,
             n_iter=10,
             cv=3,
+            verbose=True
         )
         randomized_search.fit(X, y)
         
