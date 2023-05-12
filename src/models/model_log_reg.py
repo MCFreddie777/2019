@@ -11,6 +11,18 @@ class ModelLogisticRegression():
     """
     params = {}
     
+    def __get_features_and_labels(self, filename):
+        df_impressions = pd.read_parquet(filename)
+        
+        df_impressions.loc[:, "is_clicked"] = (
+                df_impressions["referenced_item"] == df_impressions["impressed_item"]
+        ).astype(int)
+        
+        X = df_impressions[self.params['features']]
+        y = df_impressions.is_clicked
+        
+        return X, y
+    
     def update(self, params):
         self.params = params
     
@@ -26,30 +38,24 @@ class ModelLogisticRegression():
         
         train_chunks = hf.get_preprocessed_dataset_chunks('train')
         
-        for chunk_filename in train_chunks:
-            df_impressions = pd.read_parquet(chunk_filename)
-            
-            df_impressions.loc[:, "is_clicked"] = (
-                    df_impressions["referenced_item"] == df_impressions["impressed_item"]
-            ).astype(int)
-            
-            X = df_impressions[self.params['features']]
-            y = df_impressions.is_clicked
-            
-            # Perform randomized search
-            randomized_search = RandomizedSearchCV(
-                estimator=logreg_clf,
-                param_distributions=param_grid,
-                n_iter=10,
-                cv=3,
-                verbose=True
-            )
-            randomized_search.fit(X, y)
-            
-            # Partially fit the best estimator on subsequent batches
-            best_estimator = randomized_search.best_estimator_
+        # Perform randomized search on first chunk
+        X, y = self.__get_features_and_labels(train_chunks[0])
         
-        self.logreg = best_estimator
+        randomized_search = RandomizedSearchCV(
+            estimator=logreg_clf,
+            param_distributions=param_grid,
+            n_iter=10,
+            cv=3,
+        )
+        randomized_search.fit(X, y)
+        
+        # Save best model
+        self.logreg = randomized_search.best_estimator_
+        
+        # Partially fit the best estimator on subsequent chunks (warm_start=True)
+        for chunk_filename in train_chunks:
+            X, y = self.__get_features_and_labels(chunk_filename)
+            self.logreg.fit(X, y)
     
     def predict(self, *args, **kwargs):
         """Calculate click probability based on trained logistic regression model."""
