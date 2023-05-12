@@ -18,6 +18,7 @@ class ModelCheapest():
         df_impressions = (
             hf.explode(df_target, ["impressions", "prices"])
             .rename(columns={"impressions": "impressed_item", 'prices': 'price'})
+            .astype({"price": "int"})
         )
         
         # Sort impressions by user_item interactions and global interactions
@@ -26,7 +27,6 @@ class ModelCheapest():
             .sort_values(
                 by=["user_id", "session_id", "timestamp", "step", 'price'],
                 ascending=True,
-                na_position='last'
             )
             .groupby(["user_id", "session_id", "timestamp", "step"])["impressed_item"]
             .apply(lambda x: ' '.join(x))
