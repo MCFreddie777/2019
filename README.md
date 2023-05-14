@@ -6,7 +6,7 @@ Getting Started
 
 - Make sure you have installed the NVIDIA driver installed on the host system
 - [Docker](https://docs.docker.com/get-docker/)
-- Download [dataset](https://www.kaggle.com/pranavmahajan725/trivagorecsyschallengedata2019) into `/data` directory.
+- Download [dataset](https://recsys2019data.trivago.com/) into `/data/input` directory.
 
 ## Spawning and running the container
 
