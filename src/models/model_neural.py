@@ -17,7 +17,21 @@ class ModelNeural():
     """
     params = {}
     
-    def scale_features(self, X, features_to_scale):
+    def __train_test_split(self, df, test_size=0.2):
+        """
+        Splits dataset into train and validation with keeping session data integrity
+        """
+        unique_sessions = df.loc[df['session_id'].duplicated(keep=False), 'session_id'].unique()
+        np.random.shuffle(unique_sessions)
+        
+        split_idx = int(len(unique_sessions) * (1 - test_size))  # 80% for train
+        
+        train_df = df[df['session_id'].isin(unique_sessions[:split_idx])]
+        test_df = df[df['session_id'].isin(unique_sessions[split_idx:])]
+        
+        return train_df, test_df
+    
+    def __scale_features(self, X, features_to_scale):
         features = X[features_to_scale]
         
         scaler = StandardScaler().fit(features.values)
@@ -27,17 +41,23 @@ class ModelNeural():
         
         return scaler, X
     
-    def __get_features_and_labels(self, filename):
+    def __get_features_and_labels(self, filename, val_size):
         df = pd.read_parquet(filename)
         
         df.loc[:, "is_clicked"] = (
                 df["referenced_item"] == df["impressed_item"]
         ).astype(int)
         
-        X = df[self.params['features']]
-        y = df.is_clicked
+        if val_size is not None:
+            df_train, df_val = self.__train_test_split(df, test_size=val_size)
+            X_mask = self.params['features']
+            y_mask = ["is_clicked"]
+            return df_train[X_mask], df_val[X_mask], df_train[y_mask], df_val[y_mask]
         
-        return X, y
+        else:
+            X = df[self.params['features']]
+            y = df.is_clicked
+            return X, y
     
     def __create_model(
             self,
@@ -119,12 +139,9 @@ class ModelNeural():
         
         # Partially fit the best estimator on subsequent chunks
         for i, chunk_filename in enumerate(train_chunks):
-            X, y = self.__get_features_and_labels(chunk_filename)
+            X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
             
-            self.scaler, X = self.scale_features(X, ['impressed_item_rating', 'price'])
-            
-            # TODO come up with more intelligent metod of splitting
-            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
+            self.scaler, X = self.__scale_features(X_train, ['impressed_item_rating', 'price'])
             
             self.model.fit(
                 X_train,
