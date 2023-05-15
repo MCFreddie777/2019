@@ -51,8 +51,8 @@ models = {
 }
 
 # Tinker with the parameters
-run = 5
-notes = 'Add standard scaling some columns'
+run = 6
+notes = 'Add dropout layer'
 params = {
     'model': 'neural',
     'timestamp': int(time.time()),

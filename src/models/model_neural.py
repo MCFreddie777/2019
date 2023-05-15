@@ -74,7 +74,7 @@ class ModelNeural():
         
         model.add(SimpleRNN(units=neurons[0], input_shape=input_shape, activation=activation[0]))
         model.add(Dense(units=neurons[1], activation=activation[1]))
-        # model.add(Dropout(0.1))
+        model.add(Dropout(0.1))
         model.add(Dense(1, activation='sigmoid'))
         
         model.compile(loss=loss, optimizer=optimizer)
@@ -137,22 +137,24 @@ class ModelNeural():
         # Get the best model from grid search
         self.model = model  # randomized_search.best_estimator_
         
-        # Partially fit the best estimator on subsequent chunks
-        for i, chunk_filename in enumerate(train_chunks):
-            X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
+        # Train in epochs
+        for epoch in range(params['epochs']):
+            # Partially fit the best estimator on subsequent chunks
+            for i, chunk_filename in enumerate(train_chunks):
+                X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
+                
+                self.scaler, X = self.__scale_features(X_train, ['impressed_item_rating', 'price'])
+                
+                self.model.fit(
+                    X_train,
+                    y_train,
+                    validation_data=(X_val, y_val),
+                    epochs=1,
+                    batch_size=params['batch_size']  # self.model.get_params()['batch_size']
+                )
             
-            self.scaler, X = self.__scale_features(X_train, ['impressed_item_rating', 'price'])
-            
-            self.model.fit(
-                X_train,
-                y_train,
-                validation_data=(X_val, y_val),
-                epochs=params['epochs'],  # self.model.get_params()['epochs'],
-                batch_size=params['batch_size']  # self.model.get_params()['batch_size']
-            )
-        
-        # Persist model in file
-        joblib.dump(self.model, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')
+            # Persist model in file
+            joblib.dump(self.model, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')
     
     def predict(self, *args, **kwargs):
         df_impressions = hf.load_preprocessed_dataset('test')
