@@ -17,6 +17,18 @@ class ModelNeural():
     """
     params = {}
     
+    def __get_features_and_labels(self, filename):
+        df = pd.read_parquet(filename)
+        
+        df.loc[:, "is_clicked"] = (
+                df["referenced_item"] == df["impressed_item"]
+        ).astype(int)
+        
+        X = df[self.params['features']]
+        y = df.is_clicked
+        
+        return X, y
+    
     def __create_model(
             self,
             input_shape,
@@ -45,33 +57,6 @@ class ModelNeural():
     def fit(self, *args, **kwargs):
         wandb = kwargs['wandb']
         
-        df_impressions = hf.load_preprocessed_dataset('train')
-        
-        df_impressions.loc[:, "is_clicked"] = (
-                df_impressions["referenced_item"] == df_impressions["impressed_item"]
-        ).astype(int)
-        
-        X = df_impressions[self.params['features']]
-        y = df_impressions.is_clicked
-        
-        # TODO try scaling
-        # Perform feature scaling
-        # self.scaler = StandardScaler()
-        # X = self.scaler.fit_transform(X)
-        
-        # TODO split by files
-        # Split the data into training and validation sets
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
-        
-        params = {
-            'epochs': 1,
-            "batch_size": 32,
-            'activation': ['relu', 'relu'],
-            'optimizer': 'adam',
-            'neurons': (8, 4),  # (64,32)
-            'loss': 'mean_squared_error'
-        }
-        
         # Define the parameter grid
         # param_grid = {
         #     'epochs': [10, 20],
@@ -84,14 +69,26 @@ class ModelNeural():
         # 'loss': ['binary_crossentropy', 'mean_squared_error']
         # }
         
+        params = {
+            'epochs': 1,
+            "batch_size": 32,
+            'activation': ['relu', 'relu'],
+            'optimizer': 'adam',
+            'neurons': (8, 4),  # (64,32)
+            'loss': 'mean_squared_error'
+        }
+        
         # Create the neural network model
         model = self.__create_model(
-            input_shape=(X.shape[1], 1),
+            input_shape=(len(self.params['features']), 1),
             neurons=params['neurons'],
             activation=params['activation'],
             optimizer=params['optimizer'],
             loss=params['loss']
         )  # KerasClassifier(model=self.__create_model, input_shape=(X.shape[1]))
+        
+        # Split the data into training and validation sets
+        train_chunks = hf.get_preprocessed_dataset_chunks('train')
         
         # Perform randomized search
         # randomized_search = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
@@ -110,14 +107,24 @@ class ModelNeural():
         # Get the best model from grid search
         self.model = model  # randomized_search.best_estimator_
         
-        # Train the best model on the full training data
-        self.model.fit(
-            X_train,
-            y_train,
-            validation_data=(X_val, y_val),
-            epochs=params['epochs'],  # self.model.get_params()['epochs'],
-            batch_size=params['batch_size']  # self.model.get_params()['batch_size']
-        )
+        # Partially fit the best estimator on subsequent chunks
+        for i, chunk_filename in enumerate(train_chunks):
+            X, y = self.__get_features_and_labels(chunk_filename)
+            
+            # TODO Perform feature scaling
+            # self.scaler = StandardScaler()
+            # X = self.scaler.fit_transform(X)
+            
+            # TODO come up with more intelligent metod of splitting
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
+            
+            self.model.fit(
+                X_train,
+                y_train,
+                validation_data=(X_val, y_val),
+                epochs=params['epochs'],  # self.model.get_params()['epochs'],
+                batch_size=params['batch_size']  # self.model.get_params()['batch_size']
+            )
         
         # Persist model in file
         joblib.dump(self.model, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')

@@ -51,8 +51,8 @@ models = {
 }
 
 # Tinker with the parameters
-run = 2
-notes = 'Remove one simplerrn'
+run = 3
+notes = 'Partially fit model on chunks'
 params = {
     'model': 'neural',
     'timestamp': int(time.time()),
