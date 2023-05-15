@@ -51,8 +51,8 @@ models = {
 }
 
 # Tinker with the parameters
-run = 3
-notes = 'Partially fit model on chunks'
+run = 5
+notes = 'Add standard scaling some columns'
 params = {
     'model': 'neural',
     'timestamp': int(time.time()),

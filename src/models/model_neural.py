@@ -17,6 +17,16 @@ class ModelNeural():
     """
     params = {}
     
+    def scale_features(self, X, features_to_scale):
+        features = X[features_to_scale]
+        
+        scaler = StandardScaler().fit(features.values)
+        features = scaler.transform(features.values)
+        
+        X[features_to_scale] = features
+        
+        return scaler, X
+    
     def __get_features_and_labels(self, filename):
         df = pd.read_parquet(filename)
         
@@ -111,9 +121,7 @@ class ModelNeural():
         for i, chunk_filename in enumerate(train_chunks):
             X, y = self.__get_features_and_labels(chunk_filename)
             
-            # TODO Perform feature scaling
-            # self.scaler = StandardScaler()
-            # X = self.scaler.fit_transform(X)
+            self.scaler, X = self.scale_features(X, ['impressed_item_rating', 'price'])
             
             # TODO come up with more intelligent metod of splitting
             X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
@@ -137,7 +145,8 @@ class ModelNeural():
         X = df_impressions[self.params['features']]
         
         # Perform feature scaling using the fitted StandardScaler from the training data
-        # X = self.scaler.transform(X)
+        features_to_scale = ['impressed_item_rating', 'price']
+        X[features_to_scale] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
         df_impressions.loc[:, "click_probability"] = (self.model.predict(X))
