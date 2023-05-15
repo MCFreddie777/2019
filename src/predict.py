@@ -51,10 +51,10 @@ models = {
 }
 
 # Tinker with the parameters
-run = 1
-notes = ''
+run = 2
+notes = 'Remove one simplerrn'
 params = {
-    'model': 'log-reg',
+    'model': 'neural',
     'timestamp': int(time.time()),
     'features': [
         "impressed_item_position",
