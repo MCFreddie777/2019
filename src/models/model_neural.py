@@ -69,10 +69,9 @@ class ModelNeural():
     ):
         model = Sequential()
         
-        # model.add(Input(shape=input_shape))
+        model.add(Input(shape=input_shape))
         # TODO Add embedding
-        
-        model.add(SimpleRNN(units=neurons[0], input_shape=input_shape, activation=activation[0]))
+        model.add(SimpleRNN(units=neurons[0], activation=activation[0]))
         model.add(Dense(units=neurons[1], activation=activation[1]))
         model.add(Dropout(0.1))
         model.add(Dense(1, activation='sigmoid'))
