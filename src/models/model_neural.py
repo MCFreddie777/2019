@@ -1,8 +1,7 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
-from keras.layers import Dense, SimpleRNN, Reshape, Input, Dropout
+from keras.layers import Dense, SimpleRNN, Reshape, Input, Dropout, Embedding, Flatten
 from scikeras.wrappers import KerasClassifier
 import numpy as np
 import joblib
@@ -70,7 +69,6 @@ class ModelNeural():
         model = Sequential()
         
         model.add(Input(shape=input_shape))
-        # TODO Add embedding
         model.add(SimpleRNN(units=neurons[0], activation=activation[0]))
         model.add(Dense(units=neurons[1], activation=activation[1]))
         model.add(Dropout(0.1))
@@ -113,7 +111,7 @@ class ModelNeural():
             neurons=params['neurons'],
             activation=params['activation'],
             optimizer=params['optimizer'],
-            loss=params['loss']
+            loss=params['loss'],
         )  # KerasClassifier(model=self.__create_model, input_shape=(X.shape[1]))
         
         # Split the data into training and validation sets
@@ -142,8 +140,10 @@ class ModelNeural():
             for i, chunk_filename in enumerate(train_chunks):
                 X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
                 
-                self.scaler, X = self.__scale_features(X_train, ['impressed_item_rating', 'price'])
-                
+                self.scaler, X = self.__scale_features(
+                    X_train,
+                    ['impressed_item_position', 'impressed_item_rating', 'price']
+                )
                 self.model.fit(
                     X_train,
                     y_train,
@@ -163,7 +163,7 @@ class ModelNeural():
         X = df_impressions[self.params['features']]
         
         # Perform feature scaling using the fitted StandardScaler from the training data
-        features_to_scale = ['impressed_item_rating', 'price']
+        features_to_scale = ['impressed_item_position', 'impressed_item_rating', 'price']
         X[features_to_scale] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
