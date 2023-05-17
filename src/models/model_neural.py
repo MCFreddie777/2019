@@ -1,10 +1,10 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
-from keras.layers import Dense, SimpleRNN, Reshape, Input, Dropout, Embedding, Flatten
-from scikeras.wrappers import KerasClassifier
+from keras.layers import Dense, SimpleRNN, Input, Dropout
 import numpy as np
 import joblib
+from wandb.keras import WandbCallback
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -61,17 +61,18 @@ class ModelNeural():
     def __create_model(
             self,
             input_shape,
-            activation=('relu', 'relu'),
+            activation='relu',
             optimizer='adam',
             neurons=(64, 32),
-            loss='binary_crossentropy'
+            loss='binary_crossentropy',
+            dropout=0.1
     ):
         model = Sequential()
         
         model.add(Input(shape=input_shape))
-        model.add(SimpleRNN(units=neurons[0], activation=activation[0]))
-        model.add(Dense(units=neurons[1], activation=activation[1]))
-        model.add(Dropout(0.1))
+        model.add(SimpleRNN(units=neurons[0], activation=activation))
+        model.add(Dense(units=neurons[1], activation=activation))
+        model.add(Dropout(dropout))
         model.add(Dense(1, activation='sigmoid'))
         
         model.compile(loss=loss, optimizer=optimizer)
@@ -82,60 +83,21 @@ class ModelNeural():
         self.params = params
     
     def fit(self, *args, **kwargs):
-        wandb = kwargs['wandb']
-        
-        # Define the parameter grid
-        # param_grid = {
-        #     'epochs': [10, 20],
-        #     'batch_size': [32, 64],
-        #     'neurons': [(128, 64), (64, 32), (32, 16)],
-        #     'activation': ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear'],
-        #     'optimizer': ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam'],
-        #     'learn_rate': [.001, 0.01, 0.1, 0.2, 0.3],
-        #     'momentum': [0.0, 0.2, 0.4, 0.6, 0.8, 0.9],
-        # 'loss': ['binary_crossentropy', 'mean_squared_error']
-        # }
-        
-        params = {
-            'epochs': 1,
-            "batch_size": 32,
-            'activation': ['relu', 'relu'],
-            'optimizer': 'adam',
-            'neurons': (8, 4),  # (64,32)
-            'loss': 'mean_squared_error'
-        }
-        
         # Create the neural network model
-        model = self.__create_model(
+        self.model = self.__create_model(
             input_shape=(len(self.params['features']), 1),
-            neurons=params['neurons'],
-            activation=params['activation'],
-            optimizer=params['optimizer'],
-            loss=params['loss'],
-        )  # KerasClassifier(model=self.__create_model, input_shape=(X.shape[1]))
+            neurons=self.params['neurons'],
+            activation=self.params['activation'],
+            optimizer=self.params['optimizer'],
+            loss=self.params['loss'],
+            dropout=self.params['dropout']
+        )
         
         # Split the data into training and validation sets
         train_chunks = hf.get_preprocessed_dataset_chunks('train')
         
-        # Perform randomized search
-        # randomized_search = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=10, cv=3, verbose=True)
-        # randomized_search.fit(X_train, y_train)
-        
-        # Save hyperparameter tuning results
-        wandb.log({
-            "hyperparameter_tuning": params,  # {
-            # "type": randomized_search.__class__,
-            # "best_score": randomized_search.best_score_,
-            # "best_params": randomized_search.best_params_,
-            # "best_estimator": str(randomized_search.best_estimator_)
-            # }
-        })
-        
-        # Get the best model from grid search
-        self.model = model  # randomized_search.best_estimator_
-        
         # Train in epochs
-        for epoch in range(params['epochs']):
+        for epoch in range(self.params['epochs']):
             # Partially fit the best estimator on subsequent chunks
             for i, chunk_filename in enumerate(train_chunks):
                 X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
@@ -150,7 +112,8 @@ class ModelNeural():
                     y_train,
                     validation_data=(X_val, y_val),
                     epochs=1,
-                    batch_size=params['batch_size']  # self.model.get_params()['batch_size']
+                    batch_size=self.params['batch_size'],
+                    callbacks=[WandbCallback()],
                 )
             
             # Persist model in file

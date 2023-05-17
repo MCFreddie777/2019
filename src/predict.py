@@ -51,8 +51,8 @@ models = {
 }
 
 # Tinker with the parameters
-run = 6
-notes = 'Add dropout layer'
+run = 1
+notes = ''
 params = {
     'model': 'neural',
     'timestamp': int(time.time()),
@@ -63,7 +63,14 @@ params = {
         "price",
         "price_above_impression_mean",
         "is_last_interacted",
-    ]
+    ],
+    'epochs': 5,
+    "batch_size": 64,
+    'activation': 'softplus',
+    'optimizer': 'adagrad',
+    'neurons': (32, 16),
+    'dropout': 0.1,
+    'loss': 'mean_squared_error'
 }
 
 wandb_run = wandb.init(
