@@ -142,7 +142,8 @@ class ModelNeural():
                 
                 self.scaler, X = self.__scale_features(
                     X_train,
-                    ['impressed_item_position', 'impressed_item_rating', 'price']
+                    [f for f in ['impressed_item_position', 'impressed_item_rating', 'price'] if
+                     f in self.params['features']]
                 )
                 self.model.fit(
                     X_train,
@@ -163,7 +164,8 @@ class ModelNeural():
         X = df_impressions[self.params['features']]
         
         # Perform feature scaling using the fitted StandardScaler from the training data
-        features_to_scale = ['impressed_item_position', 'impressed_item_rating', 'price']
+        features_to_scale = [f for f in ['impressed_item_position', 'impressed_item_rating', 'price'] if
+                             f in self.params['features']]
         X[features_to_scale] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
