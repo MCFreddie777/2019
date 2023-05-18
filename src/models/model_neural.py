@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+# from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, SimpleRNN, Input, Dropout
 import numpy as np
@@ -30,15 +30,15 @@ class ModelNeural():
         
         return train_df, test_df
     
-    def __scale_features(self, X, features_to_scale):
-        features = X[features_to_scale]
-        
-        scaler = MinMaxScaler()
-        features = scaler.fit_transform(features.values)
-        
-        X[[f'{col}_scaled' for col in features_to_scale]] = features
-        
-        return scaler, X
+    # def __scale_features(self, X, features_to_scale):
+    #     features = X[features_to_scale]
+    #
+    #     scaler = MinMaxScaler()
+    #     features = scaler.fit_transform(features.values)
+    #
+    #     X[[f'{col}_scaled' for col in features_to_scale]] = features
+    #
+    #     return scaler, X
     
     def __get_features_and_labels(self, filename, val_size):
         df = pd.read_parquet(filename)
@@ -102,14 +102,15 @@ class ModelNeural():
             for i, chunk_filename in enumerate(train_chunks):
                 X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
                 
-                features_to_scale = [f for f in ['price'] if f in self.params['features']]
+                # TODO: Overwriting scaler how to do it in chunks
+                # features_to_scale = [f for f in ['price'] if f in self.params['features']]
                 # Scale train data
-                self.scaler, X_train = self.__scale_features(
-                    X_train,
-                    features_to_scale
-                )
+                # self.scaler, X_train = self.__scale_features(
+                #     X_train,
+                #     features_to_scale
+                # )
                 # Perform feature scaling using the fitted scaler on the validation data
-                X_val[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X_val[features_to_scale])
+                # X_val[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X_val[features_to_scale])
                 
                 self.model.fit(
                     X_train,
@@ -131,8 +132,8 @@ class ModelNeural():
         X = df_impressions[self.params['features']]
         
         # Perform feature scaling using the fitted scaler from the training data
-        features_to_scale = [f for f in ['price'] if f in self.params['features']]
-        X[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X[features_to_scale])
+        # features_to_scale = [f for f in ['price'] if f in self.params['features']]
+        # X[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
         df_impressions.loc[:, "click_probability"] = (self.model.predict(X))
