@@ -157,6 +157,9 @@ def __add_relative_impressed_item_position_column(df):
         value=grouped.cumcount() / (grouped['impressed_item_position'].transform('count') - 1)
     )
     
+    # For single impression clickouts, the result above is NaN because division by zero
+    df2["relative_impressed_item_position"].fillna(1, inplace=True)
+    
     return df2
 
 
