@@ -136,13 +136,34 @@ def __add_impressed_item_position_column(df):
     
     df2 = df.copy()
     df2.insert(
-        loc=df2.columns.get_loc("impressed_item") + 1,  # Insert previous item after reference column
+        loc=df2.columns.get_loc("impressed_item") + 1,  # Insert after column
         column='impressed_item_position',
         value=(
                 df2
                 .groupby(["user_id", "session_id", "timestamp", "step"])
                 .cumcount() + 1
         )
+    )
+    
+    return df2
+
+
+def __add_relative_impressed_item_position_column(df):
+    """
+    Inserts relative position of the impression in exploded dataframe in current session
+    First impression is 0, last is 1
+    """
+    df2 = df.copy()
+    
+    # Group dataframe by all impressions and calculate (position out of all impressions)
+    grouped = df2 \
+        .sort_values(by=['user_id', 'session_id', 'timestamp', 'step', 'impressed_item_position']) \
+        .groupby(['user_id', 'session_id', 'timestamp', 'step'])
+    
+    df2.insert(
+        loc=df2.columns.get_loc("impressed_item_position") + 1,  # Insert after column
+        column='relative_impressed_item_position',
+        value=grouped.cumcount() / (grouped['impressed_item_position'].transform('count') - 1)
     )
     
     return df2
@@ -241,6 +262,7 @@ def __collect_features(df):
         "referenced_item",
         "impressed_item",
         "impressed_item_position",
+        "relative_impressed_item_position",
         "impressed_item_rating",
         "user_impressed_item_interaction_count",
         "is_last_interacted",
@@ -274,6 +296,7 @@ def preprocess(df, df_meta_preprocessed):
         partial(__add_mean_price_column),
         partial(__add_relative_price_column),
         partial(__add_impressed_item_position_column),
+        partial(__add_relative_impressed_item_position_column),
         partial(__add_last_interacted_column),
         partial(__encode_cat_columns, columns=['device', 'platform', 'city']),
         partial(__add_rating_column, df_meta_preprocessed=df_meta_preprocessed),

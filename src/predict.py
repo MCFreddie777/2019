@@ -58,6 +58,7 @@ params = {
     'timestamp': int(time.time()),
     'features': [
         "impressed_item_position",
+        "relative_impressed_item_position",
         "impressed_item_rating",
         "user_impressed_item_interaction_count",
         "price",
