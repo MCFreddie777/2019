@@ -150,16 +150,16 @@ def __add_impressed_item_position_column(df):
 
 def __add_mean_price_column(df):
     df_mean_price = df \
-        .groupby(['user_id', 'session_id', 'timestamp', 'step', 'impressed_item']) \
-        .agg(mean_price=('price', 'mean')) \
+        .groupby(['user_id', 'session_id', 'timestamp', 'step']) \
+        .agg(mean_impressions_price=('price', 'mean')) \
         .reset_index()
     
     df2 = df_mean_price.merge(
         df,
-        on=['user_id', 'session_id', 'step', 'timestamp', 'impressed_item'],
+        on=['user_id', 'session_id', 'step', 'timestamp'],
     )
     
-    df2['price_above_impression_mean'] = (df2['price'] > df2['mean_price']).astype(int)
+    df2['price_above_impression_mean'] = (df2['price'] > df2['mean_impressions_price']).astype(int)
     
     return df2
 
