@@ -256,9 +256,12 @@ def __add_one_of_n_cheapest_column(df, n):
     """
     Adds column which contains the information whether the current impression is one of n cheapest in current session
     """
-    df['is_one_of_n_cheapest'] = df.groupby(['user_id', 'session_id', 'timestamp', 'step']) \
-                                     ['price'] \
-                                     .rank(ascending=True, method='dense') <= n
+    df['is_one_of_n_cheapest'] = (
+            df.groupby(['user_id', 'session_id', 'timestamp', 'step'])
+            ['price']
+            .rank(ascending=True, method='dense') <= n
+    ).astype(int)
+    
     return df
 
 
@@ -268,7 +271,7 @@ def __add_user_interacted_with_n_cheapest(df):
     """
     df['user_interacted_with_n_cheapest'] = df.groupby('user_id') \
         ['is_one_of_n_cheapest'] \
-        .transform(lambda x: x.shift().cumsum().fillna(0).astype(bool))
+        .transform(lambda x: x.shift().cumsum().fillna(0).astype(int))
     
     return df
 
@@ -277,7 +280,7 @@ def __add_one_of_the_top_n_column(df, n):
     """
     Adds column which contains the information whether the current impression is one of top n impressions
     """
-    df['is_one_of_the_top_n'] = df['impressed_item_position'] <= n
+    df['is_one_of_the_top_n'] = (df['impressed_item_position'] <= n).astype(int)
     
     return df
 
@@ -288,7 +291,7 @@ def __add_user_interacted_with_top_n_column(df):
     """
     df['user_interacted_with_top_n'] = df.groupby('user_id') \
         ['is_one_of_the_top_n'] \
-        .transform(lambda x: x.shift().cumsum().fillna(0).astype(bool))
+        .transform(lambda x: x.shift().cumsum().fillna(0).astype(int))
     
     return df
 
