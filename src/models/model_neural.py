@@ -102,7 +102,7 @@ class ModelNeural():
             for i, chunk_filename in enumerate(train_chunks):
                 X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
                 
-                self.scaler, X = self.__scale_features(
+                self.scaler, X_train = self.__scale_features(
                     X_train,
                     [f for f in ['impressed_item_position', 'impressed_item_rating', 'price'] if
                      f in self.params['features']]
