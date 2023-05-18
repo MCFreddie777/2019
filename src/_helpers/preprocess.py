@@ -164,6 +164,25 @@ def __add_mean_price_column(df):
     return df2
 
 
+def __add_relative_price_column(df):
+    """
+    This function calculates relative price of the impression in current session
+    """
+    df2 = df.copy()
+    
+    df2.insert(
+        loc=df2.columns.get_loc("price") + 1,  # Insert after price column
+        column='relative_price',
+        value=(
+            df2
+            .groupby(['user_id', 'session_id', 'timestamp', 'step'])['price']
+            .transform(lambda x: x / x.iloc[0])
+        )
+    )
+    
+    return df2
+
+
 def __encode_cat_columns(df, columns):
     df2 = df.copy()
     
@@ -226,6 +245,7 @@ def __collect_features(df):
         "user_impressed_item_interaction_count",
         "is_last_interacted",
         "price",
+        "relative_price",
         "price_above_impression_mean",
         "device",
         "platform",
@@ -252,6 +272,7 @@ def preprocess(df, df_meta_preprocessed):
         partial(__narrow_to_clickouts),
         partial(hf.cast, column='price', type=int),
         partial(__add_mean_price_column),
+        partial(__add_relative_price_column),
         partial(__add_impressed_item_position_column),
         partial(__add_last_interacted_column),
         partial(__encode_cat_columns, columns=['device', 'platform', 'city']),

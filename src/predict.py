@@ -61,6 +61,7 @@ params = {
         "impressed_item_rating",
         "user_impressed_item_interaction_count",
         "price",
+        "relative_price",
         "price_above_impression_mean",
         "is_last_interacted",
     ],
