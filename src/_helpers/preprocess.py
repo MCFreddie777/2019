@@ -253,6 +253,32 @@ def __add_rating_column(df, df_meta_preprocessed=MetaPreprocesser().df_meta):
     return df2
 
 
+def __cast_price_to_float(df):
+    df['price'] = pd.to_numeric(df['price'], errors='coerce')
+    return df
+
+
+def __add_one_of_n_cheapest_column(df, n):
+    """
+    Adds column which contains the information whether the current impression is one of n cheapest in current session
+    """
+    df['is_one_of_n_cheapest'] = df.groupby(['user_id', 'session_id', 'timestamp', 'step']) \
+                                     ['price'] \
+                                     .rank(ascending=True, method='dense') <= n
+    return df
+
+
+def __add_user_interacted_with_n_cheapest(df):
+    """
+    Adds column which contains the information whether user interacted previously with one of n cheapest items
+    """
+    df['user_interacted_with_n_cheapest'] = df.groupby('user_id') \
+        ['is_one_of_n_cheapest'] \
+        .transform(lambda x: x.shift().cumsum().fillna(0).astype(bool))
+    
+    return df
+
+
 def __collect_features(df):
     features = [
         "user_id",
@@ -265,7 +291,9 @@ def __collect_features(df):
         "relative_impressed_item_position",
         "impressed_item_rating",
         "user_impressed_item_interaction_count",
+        "user_interacted_with_n_cheapest",
         "is_last_interacted",
+        "is_one_of_n_cheapest",
         "price",
         "relative_price",
         "price_above_impression_mean",
@@ -291,8 +319,10 @@ def preprocess(df, df_meta_preprocessed):
         partial(__add_previous_item_column),
         partial(__explode_impressions_prices_columns),
         partial(__add_user_interacted_item_interaction_count_column),
+        partial(__cast_price_to_float),
+        partial(__add_one_of_n_cheapest_column, n=3),
+        partial(__add_user_interacted_with_n_cheapest),
         partial(__narrow_to_clickouts),
-        partial(hf.cast, column='price', type=int),
         partial(__add_mean_price_column),
         partial(__add_relative_price_column),
         partial(__add_impressed_item_position_column),
