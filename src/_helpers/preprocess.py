@@ -130,22 +130,13 @@ def __narrow_to_clickouts(df):
 
 def __add_impressed_item_position_column(df):
     """
-    After narrowing to clickout, only impressions are in the dataframe
     This function labels each impression with number which represents its order in impression list
     """
     
-    df2 = df.copy()
-    df2.insert(
-        loc=df2.columns.get_loc("impressed_item") + 1,  # Insert after column
-        column='impressed_item_position',
-        value=(
-                df2
-                .groupby(["user_id", "session_id", "timestamp", "step"])
-                .cumcount() + 1
-        )
-    )
+    target_rows = df['action_type'] == 'clickout item'
+    df.loc[target_rows, 'impressed_item_position'] = df[target_rows].groupby(['session_id', 'step']).cumcount() + 1
     
-    return df2
+    return df
 
 
 def __add_relative_impressed_item_position_column(df):
@@ -279,6 +270,26 @@ def __add_user_interacted_with_n_cheapest(df):
     return df
 
 
+def __add_one_of_the_top_n_column(df, n):
+    """
+    Adds column which contains the information whether the current impression is one of top n impressions
+    """
+    df['is_one_of_the_top_n'] = df['impressed_item_position'] <= n
+    
+    return df
+
+
+def __add_user_interacted_with_top_n_column(df):
+    """
+    Adds column which contains the information whether user interacted previously with one of the top n items
+    """
+    df['user_interacted_with_top_n'] = df.groupby('user_id') \
+        ['is_one_of_the_top_n'] \
+        .transform(lambda x: x.shift().cumsum().fillna(0).astype(bool))
+    
+    return df
+
+
 def __collect_features(df):
     features = [
         "user_id",
@@ -292,8 +303,10 @@ def __collect_features(df):
         "impressed_item_rating",
         "user_impressed_item_interaction_count",
         "user_interacted_with_n_cheapest",
+        "user_interacted_with_top_n",
         "is_last_interacted",
         "is_one_of_n_cheapest",
+        "is_one_of_the_top_n",
         "price",
         "relative_price",
         "price_above_impression_mean",
@@ -319,13 +332,15 @@ def preprocess(df, df_meta_preprocessed):
         partial(__add_previous_item_column),
         partial(__explode_impressions_prices_columns),
         partial(__add_user_interacted_item_interaction_count_column),
+        partial(__add_impressed_item_position_column),
+        partial(__add_one_of_the_top_n_column, n=3),
+        partial(__add_user_interacted_with_top_n_column),
         partial(__cast_price_to_float),
         partial(__add_one_of_n_cheapest_column, n=3),
         partial(__add_user_interacted_with_n_cheapest),
         partial(__narrow_to_clickouts),
         partial(__add_mean_price_column),
         partial(__add_relative_price_column),
-        partial(__add_impressed_item_position_column),
         partial(__add_relative_impressed_item_position_column),
         partial(__add_last_interacted_column),
         partial(__encode_cat_columns, columns=['device', 'platform', 'city']),
