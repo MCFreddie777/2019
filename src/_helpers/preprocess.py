@@ -205,10 +205,10 @@ class MetaPreprocesser():
         self.df_meta.loc[:, 'properties'] = self.df_meta.loc[:, 'properties'].str.split("|")
         
         rating_map = {
-            'Satisfactory Rating': 7.0,
-            'Good Rating': 7.5,
-            'Very Good Rating': 8.0,
-            'Excellent Rating': 8.5
+            'Satisfactory Rating': 1,
+            'Good Rating': 2,
+            'Very Good Rating': 3,
+            'Excellent Rating': 4,
         }
         
         # Properties contain multiple ratings, all of those which apply, we need to find a maximum
@@ -225,7 +225,7 @@ def __add_rating_column(df, df_meta_preprocessed=MetaPreprocesser().df_meta):
     )
     
     # Left join, fill empty ratings (impressed_item wasn't in df_meta) with mean
-    df2['impressed_item_rating'] = df2['impressed_item_rating'].fillna(df2['impressed_item_rating'].mean())
+    df2['impressed_item_rating'] = df2['impressed_item_rating'].fillna(2)
     
     df2 = df2.drop(columns='item_id')
     
@@ -277,6 +277,7 @@ def preprocess(df, df_meta_preprocessed):
         partial(__add_last_interacted_column),
         partial(__encode_cat_columns, columns=['device', 'platform', 'city']),
         partial(__add_rating_column, df_meta_preprocessed=df_meta_preprocessed),
+        partial(__encode_cat_columns, columns=['impressed_item_rating']),
         partial(__collect_features),
     ]
     
