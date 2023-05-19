@@ -40,12 +40,14 @@ docker compose exec jupyterlab bash -ic "conda env export --no-build > environme
 
 ## Scripts
 
-Projectr also contains helper scripts to generate or process data directly from console.
+Project also contains helper scripts to generate or process data directly from console.
 No need to run jupyter notebooks.
 
 ### Usage
 
-From root directory of project run
+1. Clone `.env.example` file and rename it to `.env` file. Change the env variables if you wish or keep the defaults.
+
+1. From root directory of project run
 ```
 docker compose exec jupyterlab bash -ic "python src/<script_name>.py"
 ```
