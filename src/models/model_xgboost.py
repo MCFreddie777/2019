@@ -2,6 +2,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 import joblib
+import wandb
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -30,8 +31,6 @@ class ModelXGBoost():
     
     def fit(self, *args, **kwargs):
         """Train the XGBoost model."""
-        wandb = kwargs['wandb']
-        
         param_grid = {
             'max_depth': [3, 5, 7],
             'learning_rate': [0.1, 0.01, 0.001],

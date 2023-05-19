@@ -3,6 +3,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint
 import pandas as pd
 import joblib
+import wandb
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -28,8 +29,6 @@ class ModelMLP():
         self.params = params
     
     def fit(self, *args, **kwargs):
-        wandb = kwargs['wandb']
-        
         # Define the parameter grid for randomized search
         param_grid = {
             'hidden_layer_sizes': randint(64, 256),

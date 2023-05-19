@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 import joblib
+import wandb
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -30,8 +31,6 @@ class ModelLogisticRegression():
     
     def fit(self, *args, **kwargs):
         """Train the logistic regression model."""
-        wandb = kwargs['wandb']
-        
         param_grid = {
             'penalty': ['l1', 'l2', 'elasticnet', None],
             'C': [0.1, 1, 10, 100, 1000],
