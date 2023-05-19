@@ -2,7 +2,8 @@ import pandas as pd
 
 from _helpers import constants
 from _helpers import functions as hf
-from _helpers.preprocess import preprocess, MetaPreprocesser
+from _helpers import preprocess_v1
+from _helpers import preprocess as preprocess_v2
 from drop import main as drop
 
 
@@ -18,12 +19,14 @@ def preprocess_and_save_chunks(df, type):
     chunk_size = round(float(hf.get_env('PREPROCESS_CHUNK_SIZE', 1e5)))
     chunks = split_df_into_session_chunks(df, chunk_size)
     
-    df_meta_preprocessed = MetaPreprocesser(constants.METADATA).df_meta
+    # preprocess_engine = preprocess_v1
+    preprocess_engine = preprocess_v2
+    df_meta_preprocessed = preprocess_engine.MetaPreprocesser(constants.METADATA).df_meta
     
     # Iterate over the chunks
     for i, chunk in enumerate(chunks):
         df_chunk = df[df['session_id'].isin(chunk)]
-        processed_chunk = preprocess(df_chunk, df_meta_preprocessed)
+        processed_chunk = preprocess_engine.preprocess(df_chunk, df_meta_preprocessed)
         
         processed_chunk.to_parquet(constants.PREPROCESSED(i, type), index=False)
         print(f"Chunk {i} saved to {constants.PREPROCESSED(i, type)}.")
