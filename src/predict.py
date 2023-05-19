@@ -62,8 +62,8 @@ models = {
 }
 
 # Tinker with the parameters
-run = 1
-notes = ''
+run = 20
+notes = 'test different batching'
 params = {
     'model': 'neural',
     'timestamp': int(time.time()),
@@ -82,7 +82,6 @@ params = {
         "is_one_of_the_top_n",
     ],
     'epochs': 5,
-    "batch_size": 64,
     'activation': 'softplus',
     'optimizer': 'adagrad',
     'neurons': (32, 16),

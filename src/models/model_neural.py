@@ -1,10 +1,12 @@
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, SimpleRNN, Input, Dropout
-import numpy as np
+import tensorflow as tf
 import joblib
-from wandb.keras import WandbCallback
+import copy
+import wandb
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -16,37 +18,20 @@ class ModelNeural():
     """
     params = {}
     
-    def __train_test_split(self, df, test_size=0.2):
-        """
-        Splits dataset into train and validation with keeping session data integrity
-        """
-        unique_sessions = df.loc[df['session_id'].duplicated(keep=False), 'session_id'].unique()
-        np.random.shuffle(unique_sessions)
-        
-        split_idx = int(len(unique_sessions) * (1 - test_size))  # 80% for train
-        
-        train_df = df[df['session_id'].isin(unique_sessions[:split_idx])]
-        test_df = df[df['session_id'].isin(unique_sessions[split_idx:])]
-        
-        return train_df, test_df
-    
-    def __get_features_and_labels(self, filename, val_size):
-        df = pd.read_parquet(filename)
+    def __get_features_and_labels(self, filename):
+        if type(filename) is list or type(filename) is tuple:
+            df = hf.concat_files(filename)
+        else:
+            df = pd.read_parquet(filename)
         
         df.loc[:, "is_clicked"] = (
                 df["referenced_item"] == df["impressed_item"]
         ).astype(int)
         
-        if val_size is not None:
-            df_train, df_val = self.__train_test_split(df, test_size=val_size)
-            X_mask = self.params['features']
-            y_mask = ["is_clicked"]
-            return df_train[X_mask], df_val[X_mask], df_train[y_mask], df_val[y_mask]
+        X = df[self.params['features']]
+        y = df['is_clicked']
         
-        else:
-            X = df[self.params['features']]
-            y = df.is_clicked
-            return X, y
+        return X, y
     
     def __create_model(
             self,
@@ -85,33 +70,74 @@ class ModelNeural():
         
         # Split the data into training and validation sets
         train_chunks = hf.get_preprocessed_dataset_chunks('train')
+        train_chunks, val_chunks = train_test_split(train_chunks, test_size=.20, shuffle=True)
         
-        self.scaler = MinMaxScaler()
+        # TODO: Scaling
+        # features_to_scale = [f for f in ['price'] if f in self.params['features']]
+        # self.scaler = MinMaxScaler()
+        
+        callbacks = tf.keras.callbacks.CallbackList(
+            None,
+            add_history=True,
+            add_progbar=True,
+            model=self.model,
+            epochs=self.params['epochs'],
+            verbose=1,
+            steps=len(train_chunks)
+        )
+        training_logs = None
         
         # Train in epochs
+        callbacks.on_train_begin()
+        
         for epoch in range(self.params['epochs']):
+            self.model.reset_metrics()
+            callbacks.on_epoch_begin(epoch)
+            
+            logs = None
+            
             # Partially fit the best estimator on subsequent chunks
             for i, chunk_filename in enumerate(train_chunks):
-                X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
+                callbacks.on_train_batch_begin(i)
+                
+                X_train, y_train = self.__get_features_and_labels(chunk_filename)
                 
                 # Scale train data
-                features_to_scale = [f for f in ['price'] if f in self.params['features']]
-                X_train[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.partial_fit(
-                    X_train[features_to_scale].values)
-                # Perform feature scaling using the fitted scaler on the validation data
-                X_val[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X_val[features_to_scale])
+                # X_train[[f'{col}_scaled' for col in features_to_scale]] = \
+                #     self.scaler.partial_fit(X_train[features_to_scale].values)
                 
-                self.model.fit(
-                    X_train,
-                    y_train,
-                    validation_data=(X_val, y_val),
-                    epochs=1,
-                    batch_size=self.params['batch_size'],
-                    callbacks=[WandbCallback()],
+                logs = self.model.train_on_batch(
+                    x=X_train,
+                    y=y_train,
+                    reset_metrics=False,
+                    return_dict=True,
                 )
+                
+                callbacks.on_train_batch_end(i, logs)
+                wandb.log(logs)
             
-            # Persist model in file
-            joblib.dump(self.model, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')
+            epoch_logs = copy.copy(logs)
+            
+            # Validation at the end of the epoch
+            # X_val, y_val = self.__get_features_and_labels(val_chunks)
+            
+            # Perform feature scaling using the fitted scaler on the validation data
+            # X_val[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X_val[features_to_scale])
+            
+            # validation_logs = self.model.evaluate(X_val, y_val, callbacks=callbacks, return_dict=True)
+            # epoch_logs.update({'val_' + name: v for name, v in validation_logs.items()})
+            
+            callbacks.on_epoch_end(epoch, epoch_logs)
+            training_logs = epoch_logs
+            
+            wandb.log(epoch_logs)
+            wandb.log({'epoch': epoch})
+        
+        callbacks.on_train_end(logs=training_logs)
+        wandb.log(training_logs)
+        
+        # Persist model in file
+        joblib.dump(self.model, constants.MODEL_DIR / f'{self.params["model"]}_{self.params["timestamp"]}')
     
     def predict(self, *args, **kwargs):
         df_impressions = hf.load_preprocessed_dataset('test')
@@ -121,8 +147,8 @@ class ModelNeural():
         X = df_impressions[self.params['features']]
         
         # Perform feature scaling using the fitted scaler from the training data
-        features_to_scale = [f for f in ['price'] if f in self.params['features']]
-        X[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X[features_to_scale])
+        # features_to_scale = [f for f in ['price'] if f in self.params['features']]
+        # X[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
         df_impressions.loc[:, "click_probability"] = (self.model.predict(X))

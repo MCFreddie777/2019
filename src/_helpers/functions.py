@@ -140,9 +140,7 @@ def get_preprocessed_dataset_chunks(type):
     return files
 
 
-def load_preprocessed_dataset(type):
-    files = get_preprocessed_dataset_chunks(type)
-    
+def concat_files(files):
     dfs = []
     
     for file in files:
@@ -150,3 +148,8 @@ def load_preprocessed_dataset(type):
         dfs.append(df)
     
     return pd.concat(dfs)
+
+
+def load_preprocessed_dataset(type):
+    files = get_preprocessed_dataset_chunks(type)
+    return concat_files(files)
