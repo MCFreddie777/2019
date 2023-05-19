@@ -1,6 +1,10 @@
-import pandas as pd
-import wandb
 import time
+import os
+import random
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+import wandb
 
 from _helpers import constants
 from _helpers import functions as hf
@@ -15,6 +19,13 @@ from models.model_cheapest import ModelCheapest
 from models.model_xgboost import ModelXGBoost
 from models.model_mlp import ModelMLP
 from models.model_neural import ModelNeural
+
+# Set random seed to provide reproducible results
+random_seed = 42
+os.environ['PYTHONHASHSEED'] = str(random_seed)
+tf.random.set_seed(random_seed)
+np.random.seed(random_seed)
+random.seed(random_seed)
 
 # Initalize tool for logging
 wandb.login()
