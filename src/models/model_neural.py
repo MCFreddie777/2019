@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, SimpleRNN, Input, Dropout
 import numpy as np
@@ -55,7 +54,7 @@ class ModelNeural():
             optimizer='adam',
             neurons=(64, 32),
             loss='binary_crossentropy',
-            dropout=0.1
+            dropout=0
     ):
         model = Sequential()
         
@@ -86,20 +85,11 @@ class ModelNeural():
         # Split the data into training and validation sets
         train_chunks = hf.get_preprocessed_dataset_chunks('train')
         
-        self.scaler = MinMaxScaler()
-        
         # Train in epochs
         for epoch in range(self.params['epochs']):
             # Partially fit the best estimator on subsequent chunks
             for i, chunk_filename in enumerate(train_chunks):
                 X_train, X_val, y_train, y_val = self.__get_features_and_labels(chunk_filename, val_size=0.2)
-                
-                # Scale train data
-                features_to_scale = [f for f in ['price'] if f in self.params['features']]
-                X_train[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.partial_fit(
-                    X_train[features_to_scale].values)
-                # Perform feature scaling using the fitted scaler on the validation data
-                X_val[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X_val[features_to_scale])
                 
                 self.model.fit(
                     X_train,
@@ -119,10 +109,6 @@ class ModelNeural():
         df_impressions = df_impressions[df_impressions.referenced_item.isna()]
         
         X = df_impressions[self.params['features']]
-        
-        # Perform feature scaling using the fitted scaler from the training data
-        features_to_scale = [f for f in ['price'] if f in self.params['features']]
-        X[[f'{col}_scaled' for col in features_to_scale]] = self.scaler.transform(X[features_to_scale])
         
         # Make predictions using the trained model
         df_impressions.loc[:, "click_probability"] = (self.model.predict(X))
