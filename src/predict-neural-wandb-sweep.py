@@ -221,10 +221,10 @@ def main():
                 'values': ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
             },
             'dropout': {
-                'values': [0.1, 0.3, 0.4, 0.5]
+                'values': [0, 1e-3, 1e-2, 0.1, 0.3, 0.5]
             },
             'neurons': {
-                'values': [(128, 64), (64, 32), (32, 16), (8, 4)],
+                'values': [(64, 32), (32, 16), (8, 4)],
             },
             'loss': {
                 'values': ['binary_crossentropy', 'mean_squared_error']

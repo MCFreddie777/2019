@@ -86,7 +86,7 @@ params = {
     'activation': 'softplus',
     'optimizer': 'adagrad',
     'neurons': (32, 16),
-    'dropout': 0.1,
+    'dropout': 0,
     'loss': 'mean_squared_error'
 }
 
