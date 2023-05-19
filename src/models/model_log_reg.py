@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 import joblib
@@ -34,8 +33,8 @@ class ModelLogisticRegression():
         wandb = kwargs['wandb']
         
         param_grid = {
-            'penalty': ['l1', 'l2', 'elasticnet', 'none'],
-            'C': np.logspace(-4, 4, 20),
+            'penalty': ['l1', 'l2', 'elasticnet', None],
+            'C': [0.1, 1, 10, 100, 1000],
             'solver': ['lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'],
             'max_iter': [100, 1000, 2500, 5000]
         }
