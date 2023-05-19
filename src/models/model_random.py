@@ -5,9 +5,7 @@ from _helpers import functions as f
 
 class ModelRandom():
     """This model randomly sorts the impressions list."""
-    params = {
-        'seed': 1065
-    }
+    params = {}
     
     def update(self, params):
         if ('seed' in params):
